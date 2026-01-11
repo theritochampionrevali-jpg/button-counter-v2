@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Button Counter</title>
+</head>
+<body>
+  <h1>Button Counter</h1>
+
+  <button onclick="clickButton('button-1')">Button 1</button>
+  <button onclick="clickButton('button-2')">Button 2</button>
+  <button onclick="clickButton('button-3')">Button 3</button>
+
+  <script>
+    async function clickButton(buttonId) {
+      await fetch("/click", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ buttonId })
+      });
+    }
+  </script>
+</body>
+</html>
