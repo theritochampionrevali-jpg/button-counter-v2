@@ -103,29 +103,76 @@
   </div>
 
   <script>
-    // Placeholder for backend stats data
-    const statsData = [
-      {
-        group: "10",
-        buttons: [
-          { name: "Ice Block", weekly: [3,2,0,1,4,2,0,1,1,2] },
-          { name: "Sit with friend", weekly: [1,0,2,1,0,1,0,0,0,1] },
-          { name: "Stationery Pack", weekly: [2,1,1,0,1,0,0,0,1,2] },
-        ]
-      },
-      {
-        group: "30",
-        buttons: [
-          { name: "Duty with a teacher", weekly: [0,1,0,2,1,0,0,1,0,0] },
-          { name: "Game with a friend", weekly: [1,0,1,1,1,0,1,0,0,0] }
-        ]
+    // Fetch stats data from backend and populate table
+    async function loadStats() {
+      try {
+        const response = await fetch("/stats"); // your backend endpoint
+        if (!response.ok) throw new Error("Failed to fetch stats");
+        const statsData = await response.json();
+        populateTable(statsData);
+      } catch (err) {
+        console.error(err);
+        alert("Failed to load stats data");
       }
-      // Add other groups as needed
-    ];
+    }
 
-    // Populate table with data
-    function populateTable() {
+    // Populate table with stats
+    function populateTable(statsData) {
       const tbody = document.getElementById("statsBody");
       tbody.innerHTML = "";
 
-      statsData.forEach(groupData =
+      statsData.forEach(groupData => {
+        groupData.buttons.forEach(buttonData => {
+          const tr = document.createElement("tr");
+
+          const groupTd = document.createElement("td");
+          groupTd.classList.add("group-name");
+          groupTd.textContent = groupData.group;
+          tr.appendChild(groupTd);
+
+          const buttonTd = document.createElement("td");
+          buttonTd.classList.add("button-name");
+          buttonTd.textContent = buttonData.name;
+          tr.appendChild(buttonTd);
+
+          let total = 0;
+          buttonData.weekly.forEach(count => {
+            const td = document.createElement("td");
+            td.textContent = count;
+            tr.appendChild(td);
+            total += count;
+          });
+
+          const totalTd = document.createElement("td");
+          totalTd.textContent = total;
+          tr.appendChild(totalTd);
+
+          tbody.appendChild(tr);
+        });
+      });
+    }
+
+    // Hard reset button
+    async function resetData() {
+      const confirmReset = confirm("Are you sure you want to reset ALL button stats? This cannot be undone!");
+      if (!confirmReset) return;
+
+      try {
+        const response = await fetch("/reset", { method: "POST" });
+        if (!response.ok) throw new Error("Failed to reset data");
+
+        alert("All stats have been reset.");
+        // Reload stats after reset
+        loadStats();
+      } catch (err) {
+        console.error(err);
+        alert("Error resetting data: " + err);
+      }
+    }
+
+    // Load stats on page load
+    window.addEventListener("DOMContentLoaded", loadStats);
+  </script>
+
+</body>
+</html>
