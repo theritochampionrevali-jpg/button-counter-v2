@@ -40,7 +40,7 @@
 <script>
 const WEEKS = 10;
 
-/* 🔒 AUTHORITATIVE BUTTON → GROUP MAP */
+/* Button → Group map */
 const buttonGroups = {
   "Ice Block": "10",
   "Sit with friend": "10",
@@ -78,32 +78,28 @@ const buttonGroups = {
   "$3 tuckshop voucher": "400"
 };
 
-/* Load stored dashboard */
-let dashboard = JSON.parse(localStorage.getItem("dashboard")) || {};
+let dashboard = {};
 
-/* Ensure structure exists */
-function initButton(button) {
-  if (!dashboard[button]) {
-    dashboard[button] = {
-      group: buttonGroups[button],
-      weeks: Array(WEEKS).fill(0)
-    };
-  }
-}
-
-/* Fetch CURRENT WEEK stats */
+/* Fetch stats (ALL-TIME TOTALS) */
 async function fetchStats() {
   const res = await fetch("/stats/week");
   const data = await res.json();
 
+  dashboard = {}; // 🔥 HARD RESET MEMORY
+
   data.forEach(row => {
     const button = row.button_id;
-    const total = row.total;
+    const total = Number(row.total);
 
     if (!buttonGroups[button]) return;
 
-    initButton(button);
-    dashboard[button].weeks[0] = total; // current week
+    dashboard[button] = {
+      group: buttonGroups[button],
+      weeks: [
+        total, // Week 1 = ALL TIME
+        0,0,0,0,0,0,0,0,0
+      ]
+    };
   });
 
   localStorage.setItem("dashboard", JSON.stringify(dashboard));
@@ -118,7 +114,7 @@ function renderTable() {
   Object.entries(dashboard)
     .sort((a,b) => a[1].group.localeCompare(b[1].group))
     .forEach(([button, data]) => {
-      const total = data.weeks.reduce((a,b)=>a+b,0);
+      const total = data.weeks[0]; // ✔ correct total
       const row = document.createElement("tr");
 
       row.innerHTML = `
@@ -131,21 +127,23 @@ function renderTable() {
     });
 }
 
-/* Reset with confirmation */
+/* Reset button */
 document.getElementById("reset-btn").onclick = () => {
   if (confirm("Are you SURE you want to reset all dashboard data?")) {
     localStorage.removeItem("dashboard");
     dashboard = {};
-    renderTable();
+    document.getElementById("stats-table").innerHTML = "";
   }
 };
 
-/* Initial load */
+/* Load */
 fetchStats();
 </script>
 
 
+
 </body>
 </html>
+
 
 
