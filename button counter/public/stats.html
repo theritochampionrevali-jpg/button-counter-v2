@@ -1,75 +1,131 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Button Stats</title>
+  <title>Button Stats - Eagle Shop</title>
   <style>
-    body { font-family: Roboto, sans-serif; padding: 20px; }
-    table { border-collapse: collapse; width: 300px; margin-bottom: 30px; }
-    th, td { border: 1px solid #ccc; padding: 8px; }
-    th { background: #eee; }
+    body {
+      font-family: Roboto, sans-serif;
+      padding: 20px;
+      background-color: #f7f7f7;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    /* Table styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+      background-color: #fff;
+    }
+
+    th, td {
+      border: 1px solid #333;
+      padding: 8px 12px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #444;
+      color: white;
+      position: sticky;
+      top: 0;
+    }
+
+    td.group-name {
+      font-weight: bold;
+      background-color: #f2f2f2;
+    }
+
+    td.button-name {
+      text-align: left;
+      padding-left: 12px;
+    }
+
+    tfoot td {
+      font-weight: bold;
+      background-color: #eee;
+    }
+
+    button.reset {
+      padding: 10px 16px;
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button.reset:hover {
+      opacity: 0.85;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      overflow-x: auto;
+    }
   </style>
 </head>
 <body>
 
-  <h2>Button Clicks (Last 7 Days)</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Button</th>
-        <th>Clicks</th>
-      </tr>
-    </thead>
-    <tbody id="stats-week"></tbody>
-  </table>
+  <h1>Weekly Button Stats - Eagle Shop</h1>
 
-  <h2>Button Clicks (All Time)</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Button</th>
-        <th>Clicks</th>
-      </tr>
-    </thead>
-    <tbody id="stats-all"></tbody>
-  </table>
+  <div class="container">
+    <table id="statsTable">
+      <thead>
+        <tr>
+          <th>Group</th>
+          <th>Button</th>
+          <th>Week 1</th>
+          <th>Week 2</th>
+          <th>Week 3</th>
+          <th>Week 4</th>
+          <th>Week 5</th>
+          <th>Week 6</th>
+          <th>Week 7</th>
+          <th>Week 8</th>
+          <th>Week 9</th>
+          <th>Week 10</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="statsBody">
+        <!-- Populated dynamically -->
+      </tbody>
+    </table>
+
+    <button class="reset" onclick="resetData()">HARD RESET</button>
+  </div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      // WEEK STATS
-      const weekRes = await fetch("/stats/week");
-      const weekData = await weekRes.json();
+    // Placeholder for backend stats data
+    const statsData = [
+      {
+        group: "10",
+        buttons: [
+          { name: "Ice Block", weekly: [3,2,0,1,4,2,0,1,1,2] },
+          { name: "Sit with friend", weekly: [1,0,2,1,0,1,0,0,0,1] },
+          { name: "Stationery Pack", weekly: [2,1,1,0,1,0,0,0,1,2] },
+        ]
+      },
+      {
+        group: "30",
+        buttons: [
+          { name: "Duty with a teacher", weekly: [0,1,0,2,1,0,0,1,0,0] },
+          { name: "Game with a friend", weekly: [1,0,1,1,1,0,1,0,0,0] }
+        ]
+      }
+      // Add other groups as needed
+    ];
 
-      const weekBody = document.getElementById("stats-week");
-      weekBody.innerHTML = "";
+    // Populate table with data
+    function populateTable() {
+      const tbody = document.getElementById("statsBody");
+      tbody.innerHTML = "";
 
-      weekData.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${row.button_id}</td>
-          <td>${row.total}</td>
-        `;
-        weekBody.appendChild(tr);
-      });
-
-      // ALL-TIME STATS
-      const allRes = await fetch("/stats/all");
-      const allData = await allRes.json();
-
-      const allBody = document.getElementById("stats-all");
-      allBody.innerHTML = "";
-
-      allData.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${row.button_id}</td>
-          <td>${row.total}</td>
-        `;
-        allBody.appendChild(tr);
-      });
-    });
-  </script>
-
-</body>
-</html>
-
+      statsData.forEach(groupData =
