@@ -14,7 +14,6 @@
       margin-bottom: 30px;
     }
 
-    /* Table styling */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -95,7 +94,7 @@
         </tr>
       </thead>
       <tbody id="statsBody">
-        <!-- Populated dynamically -->
+        <tr><td colspan="13">Loading stats...</td></tr>
       </tbody>
     </table>
 
@@ -103,40 +102,39 @@
   </div>
 
   <script>
-    // Fetch stats data from backend and populate table
     async function loadStats() {
       try {
-        const response = await fetch("/stats"); // your backend endpoint
-        if (!response.ok) throw new Error("Failed to fetch stats");
+        const response = await fetch("/stats");
+        if (!response.ok) throw new Error(`HTTP ${response.status} - ${response.statusText}`);
         const statsData = await response.json();
         populateTable(statsData);
       } catch (err) {
-        console.error(err);
-        alert("Failed to load stats data");
+        console.error("Failed to load stats:", err);
+        const tbody = document.getElementById("statsBody");
+        tbody.innerHTML = `<tr><td colspan="13">Failed to load stats data: ${err.message}</td></tr>`;
       }
     }
 
-    // Populate table with stats
     function populateTable(statsData) {
       const tbody = document.getElementById("statsBody");
       tbody.innerHTML = "";
 
-      statsData.forEach(groupData => {
-        groupData.buttons.forEach(buttonData => {
+      statsData.forEach(group => {
+        group.buttons.forEach(button => {
           const tr = document.createElement("tr");
 
           const groupTd = document.createElement("td");
           groupTd.classList.add("group-name");
-          groupTd.textContent = groupData.group;
+          groupTd.textContent = group.group;
           tr.appendChild(groupTd);
 
           const buttonTd = document.createElement("td");
           buttonTd.classList.add("button-name");
-          buttonTd.textContent = buttonData.name;
+          buttonTd.textContent = button.name;
           tr.appendChild(buttonTd);
 
           let total = 0;
-          buttonData.weekly.forEach(count => {
+          button.weekly.forEach(count => {
             const td = document.createElement("td");
             td.textContent = count;
             tr.appendChild(td);
@@ -152,21 +150,18 @@
       });
     }
 
-    // Hard reset button
     async function resetData() {
       const confirmReset = confirm("Are you sure you want to reset ALL button stats? This cannot be undone!");
       if (!confirmReset) return;
 
       try {
         const response = await fetch("/reset", { method: "POST" });
-        if (!response.ok) throw new Error("Failed to reset data");
-
+        if (!response.ok) throw new Error(`HTTP ${response.status} - ${response.statusText}`);
         alert("All stats have been reset.");
-        // Reload stats after reset
         loadStats();
       } catch (err) {
         console.error(err);
-        alert("Error resetting data: " + err);
+        alert("Error resetting data: " + err.message);
       }
     }
 
