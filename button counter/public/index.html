@@ -58,23 +58,27 @@
 }
 
 .counter-group {
-  border: 2px solid #ccc;
-  background-color: #f9f9f9;
-  padding: 16px;
-  border-radius: 8px;
-  text-align: center;
-      @media (max-width: 768px) {
-  .groups {
-    grid-template-columns: 1fr;
+  border: 2px solid #444;
+  background-color: #fafafa;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.counter-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .grid-container {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
-.group {
-  border: 1px solid #ddd;
-  padding: 15px ;
-  border-radius: 8px;
+@media (max-width: 480px) {
+  .grid-container {
+    grid-template-columns: 1fr;
+  }
 }
-
   </style>
 </head>
 <body>
@@ -171,6 +175,7 @@
   </script>
 </body>
 </html>
+
 
 
 
