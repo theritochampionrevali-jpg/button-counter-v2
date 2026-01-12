@@ -2,28 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Button Stats - Weekly</title>
+  <title>Button Stats Tracker</title>
   <style>
     body { font-family: Roboto, sans-serif; padding: 20px; }
-    table { border-collapse: collapse; width: 100%; margin-bottom: 30px; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
     th { background: #eee; }
-    td.button-name { text-align: left; padding-left: 12px; }
-    button.reset {
-      padding: 10px 16px;
-      background-color: #e74c3c;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    button.reset:hover { opacity: 0.85; }
+    button { margin: 5px; padding: 5px 10px; }
+    .reset { background: #f44336; color: white; border: none; cursor: pointer; }
   </style>
 </head>
 <body>
 
-  <h2>Button Clicks - Weekly Stats</h2>
+  <h2>Button Click Tracker</h2>
+
+  <div id="button-container"></div>
+
   <table>
     <thead>
       <tr>
@@ -42,80 +36,91 @@
         <th>Total</th>
       </tr>
     </thead>
-    <tbody id="stats-body">
-      <tr><td colspan="13">Loading stats...</td></tr>
-    </tbody>
+    <tbody id="stats-table"></tbody>
   </table>
 
-  <button class="reset" onclick="resetData()">HARD RESET</button>
+  <button class="reset" id="reset-btn">Reset All Data</button>
 
   <script>
-    async function loadStats() {
-      try {
-        const res = await fetch("/stats");
-        if (!res.ok) throw new Error(`HTTP ${res.status} - ${res.statusText}`);
-        const statsData = await res.json();
+    // --- Configuration ---
+    const groups = {
+      "Group A": ["Button 1", "Button 2"],
+      "Group B": ["Button 3", "Button 4"]
+    };
+    const weeks = 10;
 
-        const tbody = document.getElementById("stats-body");
-        tbody.innerHTML = "";
+    // --- Load or initialize data ---
+    let stats = JSON.parse(localStorage.getItem("buttonStats")) || {};
+    
+    // Initialize structure if empty
+    for (const group in groups) {
+      stats[group] = stats[group] || {};
+      groups[group].forEach(btn => {
+        stats[group][btn] = stats[group][btn] || Array(weeks).fill(0);
+      });
+    }
 
-        statsData.forEach(group => {
-          group.buttons.forEach(button => {
-            const tr = document.createElement("tr");
+    // --- Render buttons ---
+    const container = document.getElementById("button-container");
+    for (const group in groups) {
+      const groupDiv = document.createElement("div");
+      groupDiv.innerHTML = `<strong>${group}</strong>: `;
+      groups[group].forEach(btn => {
+        const buttonEl = document.createElement("button");
+        buttonEl.textContent = btn;
+        buttonEl.onclick = () => {
+          // Increment current week (week 1 for simplicity)
+          stats[group][btn][0] += 1;
+          saveAndRender();
+        };
+        groupDiv.appendChild(buttonEl);
+      });
+      container.appendChild(groupDiv);
+    }
 
-            // Group name
-            const groupTd = document.createElement("td");
-            groupTd.textContent = group.group;
-            tr.appendChild(groupTd);
+    // --- Save to localStorage and render table ---
+    function saveAndRender() {
+      localStorage.setItem("buttonStats", JSON.stringify(stats));
+      renderTable();
+    }
 
-            // Button name
-            const buttonTd = document.createElement("td");
-            buttonTd.classList.add("button-name");
-            buttonTd.textContent = button.name;
-            tr.appendChild(buttonTd);
+    function renderTable() {
+      const tbody = document.getElementById("stats-table");
+      tbody.innerHTML = "";
 
-            // Weekly counts
-            let total = 0;
-            button.weekly.forEach(count => {
-              const td = document.createElement("td");
-              td.textContent = count;
-              tr.appendChild(td);
-              total += count;
-            });
+      for (const group in stats) {
+        for (const btn in stats[group]) {
+          const row = document.createElement("tr");
+          const totals = stats[group][btn];
+          const totalClicks = totals.reduce((a,b) => a+b, 0);
+          row.innerHTML = `
+            <td>${group}</td>
+            <td>${btn}</td>
+            ${totals.map(val => `<td>${val}</td>`).join('')}
+            <td>${totalClicks}</td>
+          `;
+          tbody.appendChild(row);
+        }
+      }
+    }
 
-            // Total column
-            const totalTd = document.createElement("td");
-            totalTd.textContent = total;
-            tr.appendChild(totalTd);
-
-            tbody.appendChild(tr);
+    // --- Reset button ---
+    document.getElementById("reset-btn").onclick = () => {
+      if (confirm("Are you sure you want to reset all button data? This cannot be undone.")) {
+        localStorage.removeItem("buttonStats");
+        // Reset stats object
+        for (const group in groups) {
+          stats[group] = {};
+          groups[group].forEach(btn => {
+            stats[group][btn] = Array(weeks).fill(0);
           });
-        });
-
-      } catch (err) {
-        console.error("Failed to load stats:", err);
-        const tbody = document.getElementById("stats-body");
-        tbody.innerHTML = `<tr><td colspan="13">Failed to load stats data: ${err.message}</td></tr>`;
+        }
+        renderTable();
       }
-    }
+    };
 
-    async function resetData() {
-      const confirmReset = confirm("Are you sure you want to reset ALL button stats? This cannot be undone!");
-      if (!confirmReset) return;
-
-      try {
-        const res = await fetch("/reset", { method: "POST" });
-        if (!res.ok) throw new Error(`HTTP ${res.status} - ${res.statusText}`);
-        alert("All stats have been reset.");
-        loadStats();
-      } catch (err) {
-        console.error(err);
-        alert("Error resetting data: " + err.message);
-      }
-    }
-
-    // Load stats on page load
-    window.addEventListener("DOMContentLoaded", loadStats);
+    // --- Initial render ---
+    renderTable();
   </script>
 
 </body>
