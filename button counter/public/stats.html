@@ -38,68 +38,115 @@
 </table>
 
 <script>
-const weeks = 10;
-let dashboardData = JSON.parse(localStorage.getItem("dashboardData")) || {};
+<script>
+const WEEKS = 10;
 
-// --- Fetch stats from server ---
-async function fetchStats() {
-  try {
-    const res = await fetch("/stats/week"); // Your JSON endpoint
-    const data = await res.json(); 
-    // Expected format: [{ group: "10", button: "Ice Block", week: 1, total: 5 }, ...]
+/* 🔒 AUTHORITATIVE BUTTON → GROUP MAP */
+const buttonGroups = {
+  "Ice Block": "10",
+  "Sit with friend": "10",
+  "Stationery Pack": "10",
+  "Tattoo": "10",
 
-    // Clear previous data
-    dashboardData = {};
+  "Duty with a teacher": "30",
+  "Game with a friend": "30",
+  "Special chair in class": "30",
 
-    // Build dynamic groups from fetched data
-    data.forEach(entry => {
-      const { group, button, week, total } = entry;
-      if (!dashboardData[group]) dashboardData[group] = {};
-      if (!dashboardData[group][button]) dashboardData[group][button] = Array(weeks).fill(0);
-      const index = week - 1;
-      if (index >= 0 && index < weeks) dashboardData[group][button][index] = total;
-    });
+  "Notepad": "50",
+  "Lolly Bag": "50",
+  "15 mins computer time": "50",
+  "Morning tea with 3 friends": "50",
 
-    localStorage.setItem("dashboardData", JSON.stringify(dashboardData));
-    renderTable();
-  } catch (err) {
-    console.error("Error fetching stats:", err);
+  "Handball": "75",
+  "30 mins computer time": "75",
+  "20 mins computer time with friend": "75",
+
+  "Lanyard": "100",
+  "Free choice in class": "100",
+
+  "BYO morning tea with teacher": "150",
+  "Pick a prize": "150",
+  "Mentor in another class": "150",
+
+  "$2 tuckshop voucher": "250",
+  "250 badge": "250",
+  "Free play for whole class": "250",
+
+  "Morning Tea with DP": "300",
+  "Dodgeball for whole class": "300",
+
+  "400 Badge": "400",
+  "$3 tuckshop voucher": "400"
+};
+
+/* Load stored dashboard */
+let dashboard = JSON.parse(localStorage.getItem("dashboard")) || {};
+
+/* Ensure structure exists */
+function initButton(button) {
+  if (!dashboard[button]) {
+    dashboard[button] = {
+      group: buttonGroups[button],
+      weeks: Array(WEEKS).fill(0)
+    };
   }
 }
 
-// --- Render table ---
+/* Fetch CURRENT WEEK stats */
+async function fetchStats() {
+  const res = await fetch("/stats/week");
+  const data = await res.json();
+
+  data.forEach(row => {
+    const button = row.button_id;
+    const total = row.total;
+
+    if (!buttonGroups[button]) return;
+
+    initButton(button);
+    dashboard[button].weeks[0] = total; // current week
+  });
+
+  localStorage.setItem("dashboard", JSON.stringify(dashboard));
+  renderTable();
+}
+
+/* Render table */
 function renderTable() {
   const tbody = document.getElementById("stats-table");
   tbody.innerHTML = "";
 
-  for (const group in dashboardData) {
-    for (const btn in dashboardData[group]) {
-      const weekCounts = dashboardData[group][btn];
-      const total = weekCounts.reduce((a,b) => a+b, 0);
+  Object.entries(dashboard)
+    .sort((a,b) => a[1].group.localeCompare(b[1].group))
+    .forEach(([button, data]) => {
+      const total = data.weeks.reduce((a,b)=>a+b,0);
       const row = document.createElement("tr");
+
       row.innerHTML = `
-        <td>${group}</td>
-        <td>${btn}</td>
-        ${weekCounts.map(v => `<td>${v}</td>`).join('')}
+        <td>${data.group}</td>
+        <td>${button}</td>
+        ${data.weeks.map(v => `<td>${v}</td>`).join("")}
         <td>${total}</td>
       `;
       tbody.appendChild(row);
-    }
-  }
+    });
 }
 
-// --- Reset button ---
+/* Reset with confirmation */
 document.getElementById("reset-btn").onclick = () => {
-  if (confirm("Are you sure you want to reset the dashboard data?")) {
-    localStorage.removeItem("dashboardData");
-    dashboardData = {};
+  if (confirm("Are you SURE you want to reset all dashboard data?")) {
+    localStorage.removeItem("dashboard");
+    dashboard = {};
     renderTable();
   }
 };
 
-// --- Initial load ---
+/* Initial load */
 fetchStats();
+</script>
+
 </script>
 
 </body>
 </html>
+
