@@ -50,9 +50,19 @@
     }
     .groups {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  align-items: start;
+ display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 columns */
+  gap: 16px; /* space between groups */
+  max-width: 800px;
+  margin: 40px auto; /* center on page */
+}
+
+.counter-group {
+  border: 2px solid #ccc;
+  background-color: #f9f9f9;
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
       @media (max-width: 768px) {
   .groups {
     grid-template-columns: 1fr;
@@ -161,6 +171,7 @@
   </script>
 </body>
 </html>
+
 
 
 
