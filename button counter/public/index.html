@@ -46,13 +46,26 @@
     button:hover {
       opacity: 0.85;
     }
+    .groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.group {
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 8px;
+}
+
   </style>
 </head>
 <body>
 
-  <h1>Ticket Counter</h1>
 
-  <div class="group">
+  <div class="groups">
+    <div class = "group 10">
     <h2>10</h2>
   <button class="red" onclick="clickButton('Ice Block')">Ice Block</button>
   <button class="red" onclick="clickButton('Sit with friend')">Sit with friend</button>
@@ -60,14 +73,14 @@
   <button class="red" onclick="clickButton('Tatoo')">Tatoo</button>
   </div>
 
-  <div class="group">
+  <div class="group 30">
     <h2>30</h2>
   <button class="orange" onclick="clickButton('Duty with a teacher ')">Duty with a teacher</button>
   <button class="orange" onclick="clickButton('Game with a friend')">Game with a friend</button>
   <button class="orange" onclick="clickButton('Special chair in class')">Special chair in class</button>
   </div>
 
-  <div class="group">
+  <div class="group 50">
     <h2>50</h2>
   <button class="yellow" onclick="clickButton('Notepad')">Notepad</button>
   <button class="yellow" onclick="clickButton('Lolly Bag')">Lolly Bag</button>
@@ -75,40 +88,40 @@
   <button class="yellow" onclick="clickButton('Morning tea with 3 friends')">Morning tea with 3 friends</button>
   </div>
 
-  <div class="group">
+  <div class="group 75">
     <h2>75</h2>
   <button class="green" onclick="clickButton('Handball')">Handball</button>
   <button class="green" onclick="clickButton('30 mins computer time')">30 mins computer time</button>
   <button class="green" onclick="clickButton('20 mins computer time with friend')">20 mins computer time with friend</button>
   </div>
   
-  <div class="group">
+  <div class="group 100">
     <h2>100</h2>
 <button class="blue" onclick="clickButton('Lanyard')">Lanyard</button>
 <button class="blue" onclick="clickButton('Free choice in class')">Free choice in class</button>
   </div>
   
-  <div class="group">
+  <div class="group 150">
     <h2>150</h2>
   <button class="purple" onclick="clickButton('BYO morning tea with teacher')">BYO morning tea with teacher</button>
   <button class="purple" onclick="clickButton('Pick a prize')">Pick a prize</button>
   <button class="purple" onclick="clickButton('Mentor in another class')">Mentor in another class</button>
   </div>
 
-  <div class="group">
+  <div class="group 250">
     <h2>250</h2>
   <button class="pink" onclick="clickButton('$2 tuckshop voucher')">$2 tuckshop voucher</button>
   <button class="pink" onclick="clickButton('250 badge')">250 badge</button>
   <button class="pink" onclick="clickButton('Free play for whole class')">Free play for whole class</button>
   </div>
 
-  <div class="group">
+  <div class="group 300">
     <h2>300</h2>
   <button class="grey" onclick="clickButton('Morning Tea with DP')">Morning Tea with DP</button>
   <button class="grey" onclick="clickButton('Dodgeball for whole class')">Dodgeball for whole class</button>
   </div>
 
-  <div class="group">
+  <div class="group 400">
     <h2>400</h2>
   <button onclick="clickButton('400 Badge')">400 Badge</button>
   <button onclick="clickButton('$3 tuckshop voucher')">$3 tuckshop voucher</button>
@@ -142,6 +155,7 @@
   </script>
 </body>
 </html>
+
 
 
 
