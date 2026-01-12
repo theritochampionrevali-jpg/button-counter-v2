@@ -1,127 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Button Stats Tracker</title>
+  <meta charset="UTF-8">
+  <title>Dynamic Eagle Shop Dashboard</title>
   <style>
     body { font-family: Roboto, sans-serif; padding: 20px; }
     table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
     th { background: #eee; }
-    button { margin: 5px; padding: 5px 10px; }
-    .reset { background: #f44336; color: white; border: none; cursor: pointer; }
+    .reset { background: #f44336; color: white; border: none; cursor: pointer; padding: 8px 12px; margin-bottom: 20px; }
   </style>
 </head>
 <body>
 
-  <h2>Button Click Tracker</h2>
+<h1>Dynamic Eagle Shop Dashboard</h1>
+<button class="reset" id="reset-btn">Reset Dashboard Data</button>
 
-  <div id="button-container"></div>
+<table>
+  <thead>
+    <tr>
+      <th>Group</th>
+      <th>Button</th>
+      <th>Week 1</th>
+      <th>Week 2</th>
+      <th>Week 3</th>
+      <th>Week 4</th>
+      <th>Week 5</th>
+      <th>Week 6</th>
+      <th>Week 7</th>
+      <th>Week 8</th>
+      <th>Week 9</th>
+      <th>Week 10</th>
+      <th>Total</th>
+    </tr>
+  </thead>
+  <tbody id="stats-table"></tbody>
+</table>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Group</th>
-        <th>Button</th>
-        <th>Week 1</th>
-        <th>Week 2</th>
-        <th>Week 3</th>
-        <th>Week 4</th>
-        <th>Week 5</th>
-        <th>Week 6</th>
-        <th>Week 7</th>
-        <th>Week 8</th>
-        <th>Week 9</th>
-        <th>Week 10</th>
-        <th>Total</th>
-      </tr>
-    </thead>
-    <tbody id="stats-table"></tbody>
-  </table>
+<script>
+const weeks = 10;
+let dashboardData = JSON.parse(localStorage.getItem("dashboardData")) || {};
+let groups = {}; // dynamic: group number => array of button names
 
-  <button class="reset" id="reset-btn">Reset All Data</button>
+// --- Fetch Eagle Shop page HTML ---
+async function fetchShopHTML() {
+  try {
+    const res = await fetch("/"); // Replace "/" with the URL of the Eagle Shop page
+    const text = await res.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, "text/html");
 
-  <script>
-    // --- Configuration ---
-    const groups = {
-      "Group A": ["Button 1", "Button 2"],
-      "Group B": ["Button 3", "Button 4"]
-    };
-    const weeks = 10;
+    // Parse groups and buttons
+    groups = {};
+    const groupDivs = doc.querySelectorAll(".group");
+    groupDivs.forEach(groupDiv => {
+      const groupNumber = groupDiv.querySelector("h2")?.textContent.trim();
+      const buttonEls = groupDiv.querySelectorAll("button");
+      if (groupNumber && buttonEls.length) {
+        groups[groupNumber] = Array.from(buttonEls).map(btn => btn.textContent.trim());
+      }
+    });
 
-    // --- Load or initialize data ---
-    let stats = JSON.parse(localStorage.getItem("buttonStats")) || {};
-    
-    // Initialize structure if empty
+    // Initialize dashboardData structure if empty
     for (const group in groups) {
-      stats[group] = stats[group] || {};
+      dashboardData[group] = dashboardData[group] || {};
       groups[group].forEach(btn => {
-        stats[group][btn] = stats[group][btn] || Array(weeks).fill(0);
+        dashboardData[group][btn] = dashboardData[group][btn] || Array(weeks).fill(0);
       });
     }
 
-    // --- Render buttons ---
-    const container = document.getElementById("button-container");
+    localStorage.setItem("dashboardData", JSON.stringify(dashboardData));
+    fetchStats();
+  } catch (err) {
+    console.error("Failed to fetch shop HTML:", err);
+  }
+}
+
+// --- Fetch stats from server ---
+async function fetchStats() {
+  try {
+    const res = await fetch("/stats/week"); // Replace with your server's weekly stats endpoint
+    const data = await res.json();
+    // Expected format: [{ group: "10", button: "Ice Block", week: 1, total: 5 }, ...]
+
+    // Reset dashboardData
     for (const group in groups) {
-      const groupDiv = document.createElement("div");
-      groupDiv.innerHTML = `<strong>${group}</strong>: `;
       groups[group].forEach(btn => {
-        const buttonEl = document.createElement("button");
-        buttonEl.textContent = btn;
-        buttonEl.onclick = () => {
-          // Increment current week (week 1 for simplicity)
-          stats[group][btn][0] += 1;
-          saveAndRender();
-        };
-        groupDiv.appendChild(buttonEl);
+        dashboardData[group][btn] = Array(weeks).fill(0);
       });
-      container.appendChild(groupDiv);
     }
 
-    // --- Save to localStorage and render table ---
-    function saveAndRender() {
-      localStorage.setItem("buttonStats", JSON.stringify(stats));
-      renderTable();
-    }
-
-    function renderTable() {
-      const tbody = document.getElementById("stats-table");
-      tbody.innerHTML = "";
-
-      for (const group in stats) {
-        for (const btn in stats[group]) {
-          const row = document.createElement("tr");
-          const totals = stats[group][btn];
-          const totalClicks = totals.reduce((a,b) => a+b, 0);
-          row.innerHTML = `
-            <td>${group}</td>
-            <td>${btn}</td>
-            ${totals.map(val => `<td>${val}</td>`).join('')}
-            <td>${totalClicks}</td>
-          `;
-          tbody.appendChild(row);
-        }
+    // Fill with fetched stats
+    data.forEach(entry => {
+      const g = entry.group;
+      const b = entry.button;
+      const w = entry.week - 1;
+      if (dashboardData[g] && dashboardData[g][b] !== undefined && w >= 0 && w < weeks) {
+        dashboardData[g][b][w] = entry.total;
       }
-    }
+    });
 
-    // --- Reset button ---
-    document.getElementById("reset-btn").onclick = () => {
-      if (confirm("Are you sure you want to reset all button data? This cannot be undone.")) {
-        localStorage.removeItem("buttonStats");
-        // Reset stats object
-        for (const group in groups) {
-          stats[group] = {};
-          groups[group].forEach(btn => {
-            stats[group][btn] = Array(weeks).fill(0);
-          });
-        }
-        renderTable();
-      }
-    };
-
-    // --- Initial render ---
+    localStorage.setItem("dashboardData", JSON.stringify(dashboardData));
     renderTable();
-  </script>
+  } catch (err) {
+    console.error("Failed to fetch stats:", err);
+  }
+}
+
+// --- Render table ---
+function renderTable() {
+  const tbody = document.getElementById("stats-table");
+  tbody.innerHTML = "";
+  for (const group in dashboardData) {
+    for (const btn in dashboardData[group]) {
+      const weekCounts = dashboardData[group][btn];
+      const total = weekCounts.reduce((a,b) => a+b, 0);
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${group}</td>
+        <td>${btn}</td>
+        ${weekCounts.map(v => `<td>${v}</td>`).join('')}
+        <td>${total}</td>
+      `;
+      tbody.appendChild(row);
+    }
+  }
+}
+
+// --- Reset button ---
+document.getElementById("reset-btn").onclick = () => {
+  if (confirm("Are you sure you want to reset the dashboard data?")) {
+    localStorage.removeItem("dashboardData");
+    dashboardData = {};
+    renderTable();
+  }
+};
+
+// --- Load everything ---
+fetchShopHTML();
+</script>
 
 </body>
 </html>
