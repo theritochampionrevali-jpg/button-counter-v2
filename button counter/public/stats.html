@@ -8,13 +8,19 @@
   table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
   th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
   th { background: #eee; }
-  .reset { background: #f44336; color: white; border: none; cursor: pointer; padding: 8px 12px; margin-bottom: 20px; }
+  .btn { padding: 8px 12px; margin: 5px; cursor: pointer; }
 </style>
 </head>
 <body>
 
 <h1>Eagle Shop Button Stats Dashboard</h1>
-<button class="reset" id="reset-btn">Reset Dashboard Data</button>
+
+<div>
+  <button class="btn" id="prev-week">⬅ Previous Week</button>
+  <span id="current-week">Week 1</span>
+  <button class="btn" id="next-week">Next Week ➡</button>
+  <button class="btn" id="reset-btn" style="background:red;color:white;">Reset Dashboard Data</button>
+</div>
 
 <table>
 <thead>
@@ -37,10 +43,16 @@
 <tbody id="stats-table"></tbody>
 </table>
 
+<h2>Buttons</h2>
+<div id="buttons-container">
+  <!-- Buttons will be dynamically generated here -->
+</div>
+
 <script>
 const WEEKS = 10;
+let currentWeek = parseInt(localStorage.getItem("currentWeek")) || 1;
 
-/* Button → Group map */
+// Map buttons to groups
 const buttonGroups = {
   "Ice Block": "10",
   "Sit with friend": "10",
@@ -78,51 +90,38 @@ const buttonGroups = {
   "$3 tuckshop voucher": "400"
 };
 
-let dashboard = {};
-let isReset = false;
+// Load dashboard from localStorage or initialize
+let dashboard = JSON.parse(localStorage.getItem("dashboard")) || {};
 
-/* Build empty dashboard */
-function buildEmptyDashboard() {
-  dashboard = {};
-  Object.entries(buttonGroups).forEach(([button, group]) => {
+function initButton(button) {
+  if (!dashboard[button]) {
     dashboard[button] = {
-      group,
+      group: buttonGroups[button],
       weeks: Array(WEEKS).fill(0)
     };
-  });
+  }
 }
 
-/* Fetch stats */
-async function fetchStats() {
-  if (isReset) return; // 🛑 stop reload after reset
+// Initialize all buttons
+Object.keys(buttonGroups).forEach(initButton);
 
-  const res = await fetch("/stats/week");
-  const data = await res.json();
-
-  buildEmptyDashboard();
-
-  data.forEach(row => {
-    const button = row.button_id;
-    const total = Number(row.total);
-    if (dashboard[button]) {
-      dashboard[button].weeks[0] = total;
-    }
-  });
-
-  renderTable();
+// Save dashboard to localStorage
+function saveDashboard() {
+  localStorage.setItem("dashboard", JSON.stringify(dashboard));
+  localStorage.setItem("currentWeek", currentWeek);
 }
 
-/* Render table */
+// Render table
 function renderTable() {
   const tbody = document.getElementById("stats-table");
   tbody.innerHTML = "";
 
+  // Sort groups by size ascending
   Object.entries(dashboard)
-    .sort((a, b) => Number(a[1].group) - Number(b[1].group))
+    .sort((a,b) => parseInt(a[1].group) - parseInt(b[1].group))
     .forEach(([button, data]) => {
       const total = data.weeks.reduce((a,b)=>a+b,0);
       const row = document.createElement("tr");
-
       row.innerHTML = `
         <td>${data.group}</td>
         <td>${button}</td>
@@ -131,26 +130,60 @@ function renderTable() {
       `;
       tbody.appendChild(row);
     });
+
+  document.getElementById("current-week").textContent = "Week " + currentWeek;
 }
 
-/* Reset button */
+// Render buttons dynamically
+function renderButtons() {
+  const container = document.getElementById("buttons-container");
+  container.innerHTML = "";
+  Object.keys(buttonGroups)
+    .sort((a,b) => parseInt(buttonGroups[a]) - parseInt(buttonGroups[b]))
+    .forEach(button => {
+      const btn = document.createElement("button");
+      btn.textContent = button + " (+" + currentWeek + ")";
+      btn.className = "btn";
+      btn.onclick = () => {
+        initButton(button);
+        dashboard[button].weeks[currentWeek-1]++;
+        saveDashboard();
+        renderTable();
+      };
+      container.appendChild(btn);
+    });
+}
+
+// Navigation buttons
+document.getElementById("prev-week").onclick = () => {
+  if (currentWeek > 1) currentWeek--;
+  saveDashboard();
+  renderTable();
+  renderButtons();
+};
+
+document.getElementById("next-week").onclick = () => {
+  if (currentWeek < WEEKS) currentWeek++;
+  saveDashboard();
+  renderTable();
+  renderButtons();
+};
+
+// Reset button
 document.getElementById("reset-btn").onclick = () => {
-  if (confirm("Are you SURE you want to reset all dashboard data?")) {
-    isReset = true;                 // 🛑 stop refetch
-    buildEmptyDashboard();          // zero everything
-    renderTable();                  // redraw table
+  if (confirm("⚠️ This will permanently reset all data. Are you sure?")) {
+    dashboard = {};
+    currentWeek = 1;
+    saveDashboard();
+    renderTable();
+    renderButtons();
   }
 };
 
-/* Initial load */
-fetchStats();
+// Initial render
+renderTable();
+renderButtons();
 </script>
-
-
 
 </body>
 </html>
-
-
-
-
