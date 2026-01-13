@@ -128,6 +128,17 @@ button:active {
 </div>
 
 <script>
+  const resetTime = parseInt(localStorage.getItem("resetTime")) || 0;
+
+let dashboard = JSON.parse(localStorage.getItem("dashboard")) || {};
+let dashboardSavedAt = parseInt(localStorage.getItem("dashboardSavedAt")) || 0;
+
+// If dashboard is older than last reset → destroy it
+if (dashboardSavedAt < resetTime) {
+  dashboard = {};
+  localStorage.removeItem("dashboard");
+}
+
 const WEEKS = 10;
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -168,13 +179,22 @@ function clickButton(name, element) {
   element.classList.add("clicked");
   setTimeout(() => element.classList.remove("clicked"), 400);
 
-  // Data logic
+  // Ensure button exists
   if (!dashboard[name]) {
     dashboard[name] = {
       group: buttonGroups[name],
       weeks: Array(WEEKS).fill(0)
     };
   }
+
+  // Increment current week
+  dashboard[name].weeks[currentWeek - 1]++;
+
+  // Save + stamp time
+  localStorage.setItem("dashboard", JSON.stringify(dashboard));
+  localStorage.setItem("dashboardSavedAt", Date.now());
+}
+
 
   dashboard[name].weeks[currentWeek - 1]++;
   localStorage.setItem("dashboard", JSON.stringify(dashboard));
@@ -192,4 +212,5 @@ updateWeekLabel();
 
 </body>
 </html>
+
 
