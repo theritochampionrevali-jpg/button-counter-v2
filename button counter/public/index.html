@@ -134,7 +134,18 @@ const buttonGroups = {
 };
 
 // Load dashboard
+const resetVersion = parseInt(localStorage.getItem("resetVersion")) || 0;
+
 let dashboard = JSON.parse(localStorage.getItem("dashboard")) || {};
+let dashboardVersion = parseInt(localStorage.getItem("dashboardVersion")) || 0;
+
+// 🔥 If dashboard is older than last reset → wipe it
+if (dashboardVersion < resetVersion) {
+  dashboard = {};
+  localStorage.removeItem("dashboard");
+  localStorage.setItem("dashboardVersion", resetVersion);
+}
+
 let currentWeek = parseInt(localStorage.getItem("currentWeek")) || 1;
 let lastWeekUpdate = parseInt(localStorage.getItem("lastWeekUpdate")) || Date.now();
 
@@ -187,3 +198,4 @@ overrideButtons();
 
 </body>
 </html>
+
