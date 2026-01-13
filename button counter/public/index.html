@@ -37,6 +37,16 @@
     border-radius:6px;
     color:white;
   }
+  button.clicked {
+  border: 3px solid #000;
+  box-sizing: border-box;
+  transform: scale(0.96);
+}
+
+button:active {
+  transform: scale(0.95);
+}
+
 
   .yellow { background:#ffe078; color:#000; }
   .blue { background:#3498db; }
@@ -153,19 +163,27 @@ function updateWeekLabel() {
     `Current Week: ${currentWeek}`;
 }
 
-function clickButton(name) {
+function clickButton(name, element) {
+  // Visual feedback
+  element.classList.add("clicked");
+  setTimeout(() => element.classList.remove("clicked"), 400);
+
+  // Data logic
   if (!dashboard[name]) {
     dashboard[name] = {
       group: buttonGroups[name],
       weeks: Array(WEEKS).fill(0)
     };
   }
+
   dashboard[name].weeks[currentWeek - 1]++;
   localStorage.setItem("dashboard", JSON.stringify(dashboard));
 }
 
+
 document.querySelectorAll("button").forEach(btn => {
-  btn.onclick = () => clickButton(btn.textContent.trim());
+  btn.onclick = () => clickButton(btn.textContent.trim(), btn);
+
 });
 
 autoAdvanceWeek();
@@ -174,3 +192,4 @@ updateWeekLabel();
 
 </body>
 </html>
+
