@@ -1,162 +1,189 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Richlands East State School Eagle Shop</title>
-  <style>
-    body {
-      font-family: Roboto, sans-serif;
-      padding: 20px;
-      background-color: #fff;
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-
-    /* Grid for groups */
-    .groups {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr); /* 3 columns */
-      gap: 16px; /* space between groups */
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    /* Each group styling */
-    .group {
-      border: 3px solid #333;         /* DARK BORDER */
-      background-color: #f2f2f2;      /* SHADED BACKGROUND */
-      padding: 16px;
-      border-radius: 10px;
-      text-align: center;
-    }
-
-    .group h2 {
-      margin-bottom: 12px;
-    }
-
-    /* Buttons */
-    button {
-      padding: 16px;
-      margin: 5px;
-      border: none;
-      cursor: pointer;
-      font-size: 18px;
-      font-weight: 600;
-      border-radius: 6px;
-      color: white;
-    }
-
-    /* Button colors */
-    .blue { background-color: #3498db; }
-    .green { background-color: #2ecc71; }
-    .orange { background-color: #f39c12; }
-    .red { background-color: #e74c3c; }
-    .yellow { background-color: #ffe078; color: #000; } /* dark text for contrast */
-    .purple { background-color: #7c4dff; }
-    .pink { background-color: #ffc5d3; color: #000; }
-    .pastelpurple { background-color: #C9AODC; color: #000; }
-    .background { background-color: #000080;  }
-
-    button:hover {
-      opacity: 0.85;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      .groups {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media (max-width: 480px) {
-      .groups {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Richlands East State School Eagle Shop</title>
+<style>
+  body { font-family: Roboto, sans-serif; padding: 20px; background-color: #fff; }
+  h1 { text-align: center; margin-bottom: 20px; }
+  .groups {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .group {
+    border: 3px solid #333;
+    background-color: #f2f2f2;
+    padding: 16px;
+    border-radius: 10px;
+    text-align: center;
+  }
+  .group h2 { margin-bottom: 12px; }
+  button {
+    padding: 16px;
+    margin: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 600;
+    border-radius: 6px;
+    color: white;
+  }
+  .blue { background-color: #3498db; }
+  .green { background-color: #2ecc71; }
+  .orange { background-color: #f39c12; }
+  .red { background-color: #e74c3c; }
+  .yellow { background-color: #ffe078; color: #000; }
+  .purple { background-color: #7c4dff; }
+  .pink { background-color: #ffc5d3; color: #000; }
+  .pastelpurple { background-color: #C9A0DC; color: #000; }
+  .background { background-color: #000080; }
+  button:hover { opacity: 0.85; }
+  @media (max-width: 768px) { .groups { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 480px) { .groups { grid-template-columns: 1fr; } }
+  #current-week { text-align: center; margin-bottom: 20px; }
+</style>
 </head>
 <body>
 
-  <h1>Richlands East State School Eagle Shop</h1>
+<h1>Richlands East State School Eagle Shop</h1>
+<h2 id="current-week"></h2>
 
-  <div class="groups">
-    <div class="group group-10">
-      <h2>10</h2>
-      <button class="yellow" onclick="clickButton('Ice Block')">Ice Block</button>
-      <button class="yellow" onclick="clickButton('Sit with friend')">Sit with friend</button>
-      <button class="yellow" onclick="clickButton('Stationery Pack')">Stationery Pack</button>
-      <button class="yellow" onclick="clickButton('Tattoo')">Tattoo</button>
-    </div>
-
-    <div class="group group-30">
-      <h2>30</h2>
-      <button class="blue" onclick="clickButton('Duty with a teacher')">Duty with a teacher</button>
-      <button class="blue" onclick="clickButton('Game with a friend')">Game with a friend</button>
-      <button class="blue" onclick="clickButton('Special chair in class')">Special chair in class</button>
-    </div>
-
-    <div class="group group-50">
-      <h2>50</h2>
-      <button class="green" onclick="clickButton('Notepad')">Notepad</button>
-      <button class="green" onclick="clickButton('Lolly Bag')">Lolly Bag</button>
-      <button class="green" onclick="clickButton('15 mins computer time')">15 mins computer time</button>
-      <button class="green" onclick="clickButton('Morning tea with 3 friends')">Morning tea with 3 friends</button>
-    </div>
-
-    <div class="group group-75">
-      <h2>75</h2>
-      <button class="orange" onclick="clickButton('Handball')">Handball</button>
-      <button class="orange" onclick="clickButton('30 mins computer time')">30 mins computer time</button>
-      <button class="orange" onclick="clickButton('20 mins computer time with friend')">20 mins computer time with friend</button>
-    </div>
-
-    <div class="group group-100">
-      <h2>100</h2>
-      <button class="pastelpurple" onclick="clickButton('Lanyard')">Lanyard</button>
-      <button class="pastelpurple" onclick="clickButton('Free choice in class')">Free choice in class</button>
-    </div>
-
-    <div class="group group-150">
-      <h2>150</h2>
-      <button class="pink" onclick="clickButton('BYO morning tea with teacher')">BYO morning tea with teacher</button>
-      <button class="pink" onclick="clickButton('Pick a prize')">Pick a prize</button>
-      <button class="pink" onclick="clickButton('Mentor in another class')">Mentor in another class</button>
-    </div>
-
-    <div class="group group-250">
-      <h2>250</h2>
-      <button class="red" onclick="clickButton('$2 tuckshop voucher')">$2 tuckshop voucher</button>
-      <button class="red" onclick="clickButton('Dodgeball for your whole class')">Dodgeball for your whole class</button>
-      <button class="red" onclick="clickButton('Free play for whole class')">Free play for whole class</button>
-    </div>
-
-    <div class="group group-300">
-      <h2>300</h2>
-      <button class="purple" onclick="clickButton('Morning Tea with DP')">Morning Tea with DP</button>
-      <button class="purple" onclick="clickButton('Games Room (Nintendo Switch)')">Dodgeball for whole class</button>
-    </div>
-
-    <div class="group group-400">
-      <h2>400</h2>
-      <button class="background" onclick="clickButton('400 Badge')">400 Badge</button>
-      <button class="background" onclick="clickButton('$3 tuckshop voucher')">$3 tuckshop voucher</button>
-    </div>
+<div class="groups">
+  <!-- Group 10 -->
+  <div class="group group-10">
+    <h2>10</h2>
+    <button class="yellow">Ice Block</button>
+    <button class="yellow">Sit with friend</button>
+    <button class="yellow">Stationery Pack</button>
+    <button class="yellow">Tattoo</button>
   </div>
+  <!-- Group 30 -->
+  <div class="group group-30">
+    <h2>30</h2>
+    <button class="blue">Duty with a teacher</button>
+    <button class="blue">Game with a friend</button>
+    <button class="blue">Special chair in class</button>
+  </div>
+  <!-- Group 50 -->
+  <div class="group group-50">
+    <h2>50</h2>
+    <button class="green">Notepad</button>
+    <button class="green">Lolly Bag</button>
+    <button class="green">15 mins computer time</button>
+    <button class="green">Morning tea with 3 friends</button>
+  </div>
+  <!-- Group 75 -->
+  <div class="group group-75">
+    <h2>75</h2>
+    <button class="orange">Handball</button>
+    <button class="orange">30 mins computer time</button>
+    <button class="orange">20 mins computer time with friend</button>
+  </div>
+  <!-- Group 100 -->
+  <div class="group group-100">
+    <h2>100</h2>
+    <button class="purple">Lanyard</button>
+    <button class="purple">Free choice in class</button>
+  </div>
+  <!-- Group 150 -->
+  <div class="group group-150">
+    <h2>150</h2>
+    <button class="pink">BYO morning tea with teacher</button>
+    <button class="pink">Pick a prize</button>
+    <button class="pink">Mentor in another class</button>
+  </div>
+  <!-- Group 250 -->
+  <div class="group group-250">
+    <h2>250</h2>
+    <button class="red">$2 tuckshop voucher</button>
+    <button class="red">Dodgeball for your whole class</button>
+    <button class="red">Free play for whole class</button>
+  </div>
+  <!-- Group 300 -->
+  <div class="group group-300">
+    <h2>300</h2>
+    <button class="pastelpurple">Morning Tea with DP</button>
+    <button class="pastelpurple">Games Room (Nintendo Switch)</button>
+  </div>
+  <!-- Group 400 -->
+  <div class="group group-400">
+    <h2>400</h2>
+    <button class="background">400 Badge</button>
+    <button class="background">$3 tuckshop voucher</button>
+  </div>
+</div>
 
-  <script>
-    async function clickButton(buttonId) {
-      await fetch("/click", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ buttonId })
-      });
-    }
-  </script>
+<script>
+const WEEKS = 10;
+const ONE_WEEK_MS = 7*24*60*60*1000;
+
+// Button → group mapping
+const buttonGroups = {
+  "Ice Block":"10","Sit with friend":"10","Stationery Pack":"10","Tattoo":"10",
+  "Duty with a teacher":"30","Game with a friend":"30","Special chair in class":"30",
+  "Notepad":"50","Lolly Bag":"50","15 mins computer time":"50","Morning tea with 3 friends":"50",
+  "Handball":"75","30 mins computer time":"75","20 mins computer time with friend":"75",
+  "Lanyard":"100","Free choice in class":"100",
+  "BYO morning tea with teacher":"150","Pick a prize":"150","Mentor in another class":"150",
+  "$2 tuckshop voucher":"250","Dodgeball for your whole class":"250","Free play for whole class":"250",
+  "Morning Tea with DP":"300","Games Room (Nintendo Switch)":"300",
+  "400 Badge":"400","$3 tuckshop voucher":"400"
+};
+
+// Load dashboard
+let dashboard = JSON.parse(localStorage.getItem("dashboard")) || {};
+let currentWeek = parseInt(localStorage.getItem("currentWeek")) || 1;
+let lastWeekUpdate = parseInt(localStorage.getItem("lastWeekUpdate")) || Date.now();
+
+function initButton(button) {
+  if (!dashboard[button]) {
+    dashboard[button] = {group: buttonGroups[button], weeks: Array(WEEKS).fill(0)};
+  }
+}
+
+// Auto-advance week every 7 days
+function updateWeek() {
+  const now = Date.now();
+  const weeksPassed = Math.floor((now - lastWeekUpdate)/ONE_WEEK_MS);
+  if (weeksPassed > 0) {
+    currentWeek += weeksPassed;
+    if (currentWeek > WEEKS) currentWeek = WEEKS;
+    lastWeekUpdate = now;
+    localStorage.setItem("currentWeek", currentWeek);
+    localStorage.setItem("lastWeekUpdate", lastWeekUpdate);
+  }
+}
+
+// Display current week
+function showCurrentWeek() {
+  const el = document.getElementById("current-week");
+  el.textContent = `Current Week: ${currentWeek}`;
+}
+
+// Handle button clicks
+function clickButton(button) {
+  initButton(button);
+  dashboard[button].weeks[currentWeek-1]++;
+  localStorage.setItem("dashboard", JSON.stringify(dashboard));
+  showCurrentWeek();
+}
+
+// Override HTML buttons
+function overrideButtons() {
+  document.querySelectorAll(".groups button").forEach(btn => {
+    const name = btn.textContent.trim();
+    btn.onclick = () => clickButton(name);
+  });
+}
+
+// Init
+updateWeek();
+showCurrentWeek();
+overrideButtons();
+</script>
 
 </body>
 </html>
-
-
-
