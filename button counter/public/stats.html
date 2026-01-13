@@ -85,7 +85,23 @@ document.getElementById("next").onclick = ()=>{
 
 document.getElementById("reset").onclick = ()=>{
   if(!confirm("Delete ALL data?")) return;
-  localStorage.clear();
+  document.getElementById("reset").onclick = () => {
+  if (!confirm("Delete ALL data?")) return;
+
+  const resetTime = Date.now();
+
+  localStorage.setItem("resetTime", resetTime);
+  localStorage.removeItem("dashboard");
+  localStorage.removeItem("currentWeek");
+  localStorage.removeItem("lastWeekUpdate");
+
+  dashboard = {};
+  currentWeek = 1;
+
+  render();
+  alert("✅ All data has been reset.");
+};
+
   dashboard = {};
   currentWeek = 1;
   localStorage.setItem("currentWeek",1);
@@ -97,3 +113,4 @@ render();
 
 </body>
 </html>
+
