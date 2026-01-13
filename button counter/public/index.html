@@ -37,16 +37,6 @@
     border-radius:6px;
     color:white;
   }
-  button.clicked {
-  border: 3px solid #000;
-  box-sizing: border-box;
-  transform: scale(0.96);
-}
-
-button:active {
-  transform: scale(0.95);
-}
-
 
   .yellow { background:#ffe078; color:#000; }
   .blue { background:#3498db; }
@@ -128,17 +118,6 @@ button:active {
 </div>
 
 <script>
-  const resetTime = parseInt(localStorage.getItem("resetTime")) || 0;
-
-let dashboard = JSON.parse(localStorage.getItem("dashboard")) || {};
-let dashboardSavedAt = parseInt(localStorage.getItem("dashboardSavedAt")) || 0;
-
-// If dashboard is older than last reset → destroy it
-if (dashboardSavedAt < resetTime) {
-  dashboard = {};
-  localStorage.removeItem("dashboard");
-}
-
 const WEEKS = 10;
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -174,36 +153,19 @@ function updateWeekLabel() {
     `Current Week: ${currentWeek}`;
 }
 
-function clickButton(name, element) {
-  // Visual feedback
-  element.classList.add("clicked");
-  setTimeout(() => element.classList.remove("clicked"), 400);
-
-  // Ensure button exists
+function clickButton(name) {
   if (!dashboard[name]) {
     dashboard[name] = {
       group: buttonGroups[name],
       weeks: Array(WEEKS).fill(0)
     };
   }
-
-  // Increment current week
-  dashboard[name].weeks[currentWeek - 1]++;
-
-  // Save + stamp time
-  localStorage.setItem("dashboard", JSON.stringify(dashboard));
-  localStorage.setItem("dashboardSavedAt", Date.now());
-}
-
-
   dashboard[name].weeks[currentWeek - 1]++;
   localStorage.setItem("dashboard", JSON.stringify(dashboard));
 }
-
 
 document.querySelectorAll("button").forEach(btn => {
-  btn.onclick = () => clickButton(btn.textContent.trim(), btn);
-
+  btn.onclick = () => clickButton(btn.textContent.trim());
 });
 
 autoAdvanceWeek();
@@ -212,5 +174,3 @@ updateWeekLabel();
 
 </body>
 </html>
-
-
