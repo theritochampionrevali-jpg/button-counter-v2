@@ -144,6 +144,21 @@ document.getElementById("next-week").onclick = () => {
 document.getElementById("reset-btn").onclick = () => {
   if (!confirm("⚠️ This will permanently delete ALL data.\n\nAre you sure?")) return;
 
+  const resetVersion = Date.now();
+
+  localStorage.setItem("resetVersion", resetVersion);
+  localStorage.removeItem("dashboard");
+  localStorage.removeItem("currentWeek");
+  localStorage.removeItem("lastWeekUpdate");
+
+  dashboard = {};
+  currentWeek = 1;
+
+  renderTable();
+
+  alert("✅ All data permanently deleted.");
+};
+
   localStorage.removeItem("dashboard");
   localStorage.removeItem("currentWeek");
   localStorage.removeItem("lastWeekUpdate");
@@ -162,3 +177,4 @@ renderTable();
 
 </body>
 </html>
+
