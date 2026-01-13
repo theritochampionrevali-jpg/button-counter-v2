@@ -5,176 +5,95 @@
 <title>Eagle Shop Stats</title>
 
 <style>
-  body {
-    font-family: Roboto, sans-serif;
-    padding: 20px;
-  }
+  body { font-family: Roboto, sans-serif; padding:20px; }
+  h1 { text-align:center; }
 
-  h1 {
-    text-align: center;
-    margin-bottom: 10px;
-  }
+  .controls { text-align:center; margin-bottom:15px; }
+  button { padding:8px 14px; margin:5px; cursor:pointer; font-weight:bold; }
+  .reset { background:#f44336; color:white; border:none; }
 
-  .controls {
-    text-align: center;
-    margin-bottom: 15px;
-  }
-
-  button {
-    padding: 8px 14px;
-    margin: 5px;
-    cursor: pointer;
-    font-weight: bold;
-  }
-
-  .reset {
-    background-color: #f44336;
-    color: white;
-    border: none;
-  }
-
-  table {
-    border-collapse: collapse;
-    width: 100%;
-  }
-
-  th, td {
-    border: 1px solid #ccc;
-    padding: 8px;
-    text-align: center;
-  }
-
-  th {
-    background-color: #eee;
-  }
-
-  .current-week {
-    background-color: #fff59d;
-    font-weight: bold;
-  }
+  table { width:100%; border-collapse:collapse; }
+  th, td { border:1px solid #ccc; padding:6px; text-align:center; }
+  th { background:#eee; }
+  .current-week { background:#fff59d; font-weight:bold; }
 </style>
 </head>
 
 <body>
 
-<h1>Eagle Shop Stats Dashboard</h1>
+<h1>Eagle Shop Stats</h1>
 
 <div class="controls">
-  <button id="prev-week">⬅ Previous Week</button>
+  <button id="prev">⬅ Previous</button>
   <span id="week-label">Week 1</span>
-  <button id="next-week">Next Week ➡</button>
-  <br>
-  <button class="reset" id="reset-btn">Reset ALL Data</button>
+  <button id="next">Next ➡</button><br>
+  <button class="reset" id="reset">Reset ALL Data</button>
 </div>
 
 <table>
 <thead>
 <tr>
-  <th>Group</th>
-  <th>Button</th>
-  <th>Week 1</th>
-  <th>Week 2</th>
-  <th>Week 3</th>
-  <th>Week 4</th>
-  <th>Week 5</th>
-  <th>Week 6</th>
-  <th>Week 7</th>
-  <th>Week 8</th>
-  <th>Week 9</th>
-  <th>Week 10</th>
+  <th>Group</th><th>Button</th>
+  <th>W1</th><th>W2</th><th>W3</th><th>W4</th><th>W5</th>
+  <th>W6</th><th>W7</th><th>W8</th><th>W9</th><th>W10</th>
   <th>Total</th>
 </tr>
 </thead>
-
-<tbody id="stats-table"></tbody>
+<tbody id="table"></tbody>
 </table>
 
 <script>
 const WEEKS = 10;
 
-// 🔹 Load data
 let dashboard = JSON.parse(localStorage.getItem("dashboard")) || {};
 let currentWeek = parseInt(localStorage.getItem("currentWeek")) || 1;
 
-// 🔹 Render table
-function renderTable() {
-  const tbody = document.getElementById("stats-table");
-  tbody.innerHTML = "";
-
+function render() {
+  const body = document.getElementById("table");
+  body.innerHTML = "";
   document.getElementById("week-label").textContent = `Week ${currentWeek}`;
 
   Object.entries(dashboard)
-    .sort((a, b) => parseInt(a[1].group) - parseInt(b[1].group))
-    .forEach(([button, data]) => {
-
-      const total = data.weeks.reduce((a, b) => a + b, 0);
+    .sort((a,b)=>parseInt(a[1].group)-parseInt(b[1].group))
+    .forEach(([name,data])=>{
+      const total = data.weeks.reduce((a,b)=>a+b,0);
       const row = document.createElement("tr");
-
       row.innerHTML = `
         <td>${data.group}</td>
-        <td>${button}</td>
-        ${data.weeks.map((v, i) =>
-          `<td class="${i === currentWeek - 1 ? "current-week" : ""}">${v}</td>`
-        ).join("")}
-        <td>${total}</td>
-      `;
-
-      tbody.appendChild(row);
+        <td>${name}</td>
+        ${data.weeks.map((v,i)=>`<td class="${i===currentWeek-1?'current-week':''}">${v}</td>`).join("")}
+        <td>${total}</td>`;
+      body.appendChild(row);
     });
 }
 
-// 🔹 Week navigation
-document.getElementById("prev-week").onclick = () => {
-  if (currentWeek > 1) {
+document.getElementById("prev").onclick = ()=>{
+  if(currentWeek>1){
     currentWeek--;
-    localStorage.setItem("currentWeek", currentWeek);
-    renderTable();
+    localStorage.setItem("currentWeek",currentWeek);
+    render();
   }
 };
 
-document.getElementById("next-week").onclick = () => {
-  if (currentWeek < WEEKS) {
+document.getElementById("next").onclick = ()=>{
+  if(currentWeek<WEEKS){
     currentWeek++;
-    localStorage.setItem("currentWeek", currentWeek);
-    renderTable();
+    localStorage.setItem("currentWeek",currentWeek);
+    render();
   }
 };
 
-// 🔥 HARD RESET (NO DATA RETURNS)
-document.getElementById("reset-btn").onclick = () => {
-  if (!confirm("⚠️ This will permanently delete ALL data.\n\nAre you sure?")) return;
-
-  const resetVersion = Date.now();
-
-  localStorage.setItem("resetVersion", resetVersion);
-  localStorage.removeItem("dashboard");
-  localStorage.removeItem("currentWeek");
-  localStorage.removeItem("lastWeekUpdate");
-
+document.getElementById("reset").onclick = ()=>{
+  if(!confirm("Delete ALL data?")) return;
+  localStorage.clear();
   dashboard = {};
   currentWeek = 1;
-
-  renderTable();
-
-  alert("✅ All data permanently deleted.");
+  localStorage.setItem("currentWeek",1);
+  render();
 };
 
-  localStorage.removeItem("dashboard");
-  localStorage.removeItem("currentWeek");
-  localStorage.removeItem("lastWeekUpdate");
-
-  dashboard = {};
-  currentWeek = 1;
-
-  renderTable();
-
-  alert("✅ All data has been reset.");
-};
-
-// Initial render
-renderTable();
+render();
 </script>
 
 </body>
 </html>
-
