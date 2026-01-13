@@ -3,23 +3,68 @@
 <head>
 <meta charset="UTF-8">
 <title>Eagle Shop Stats</title>
+
 <style>
-body { font-family: Roboto, sans-serif; padding: 20px; }
-h1 { text-align: center; margin-bottom: 10px; }
-table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-th { background: #eee; }
-.current-week { background-color: #ffff99; }
-.btn { padding: 8px 12px; margin: 5px; cursor: pointer; }
+  body {
+    font-family: Roboto, sans-serif;
+    padding: 20px;
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .controls {
+    text-align: center;
+    margin-bottom: 15px;
+  }
+
+  button {
+    padding: 8px 14px;
+    margin: 5px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  .reset {
+    background-color: #f44336;
+    color: white;
+    border: none;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+  }
+
+  th {
+    background-color: #eee;
+  }
+
+  .current-week {
+    background-color: #fff59d;
+    font-weight: bold;
+  }
 </style>
 </head>
+
 <body>
 
 <h1>Eagle Shop Stats Dashboard</h1>
-<div>
-  <button class="btn" id="prev-week">⬅ Previous Week</button>
-  <span id="current-week">Week 1</span>
-  <button class="btn" id="next-week">Next Week ➡</button>
+
+<div class="controls">
+  <button id="prev-week">⬅ Previous Week</button>
+  <span id="week-label">Week 1</span>
+  <button id="next-week">Next Week ➡</button>
+  <br>
+  <button class="reset" id="reset-btn">Reset ALL Data</button>
 </div>
 
 <table>
@@ -40,44 +85,75 @@ th { background: #eee; }
   <th>Total</th>
 </tr>
 </thead>
+
 <tbody id="stats-table"></tbody>
 </table>
 
 <script>
 const WEEKS = 10;
-let currentWeek = parseInt(localStorage.getItem("currentWeek")) || 1;
-let dashboard = JSON.parse(localStorage.getItem("dashboard")) || {};
 
-// Sort groups by value
+// 🔹 Load data
+let dashboard = JSON.parse(localStorage.getItem("dashboard")) || {};
+let currentWeek = parseInt(localStorage.getItem("currentWeek")) || 1;
+
+// 🔹 Render table
 function renderTable() {
   const tbody = document.getElementById("stats-table");
   tbody.innerHTML = "";
+
+  document.getElementById("week-label").textContent = `Week ${currentWeek}`;
+
   Object.entries(dashboard)
-    .sort((a,b)=>parseInt(a[1].group)-parseInt(b[1].group))
-    .forEach(([button,data])=>{
-      const total = data.weeks.reduce((a,b)=>a+b,0);
+    .sort((a, b) => parseInt(a[1].group) - parseInt(b[1].group))
+    .forEach(([button, data]) => {
+
+      const total = data.weeks.reduce((a, b) => a + b, 0);
       const row = document.createElement("tr");
+
       row.innerHTML = `
         <td>${data.group}</td>
         <td>${button}</td>
-        ${data.weeks.map((v,i)=>`<td ${i===currentWeek-1?'class="current-week"':''}>${v}</td>`).join('')}
+        ${data.weeks.map((v, i) =>
+          `<td class="${i === currentWeek - 1 ? "current-week" : ""}">${v}</td>`
+        ).join("")}
         <td>${total}</td>
       `;
+
       tbody.appendChild(row);
     });
-  document.getElementById("current-week").textContent = `Week ${currentWeek}`;
 }
 
-// Week navigation
-document.getElementById("prev-week").onclick = ()=>{
-  if(currentWeek>1) currentWeek--;
-  localStorage.setItem("currentWeek", currentWeek);
-  renderTable();
+// 🔹 Week navigation
+document.getElementById("prev-week").onclick = () => {
+  if (currentWeek > 1) {
+    currentWeek--;
+    localStorage.setItem("currentWeek", currentWeek);
+    renderTable();
+  }
 };
-document.getElementById("next-week").onclick = ()=>{
-  if(currentWeek<WEEKS) currentWeek++;
-  localStorage.setItem("currentWeek", currentWeek);
+
+document.getElementById("next-week").onclick = () => {
+  if (currentWeek < WEEKS) {
+    currentWeek++;
+    localStorage.setItem("currentWeek", currentWeek);
+    renderTable();
+  }
+};
+
+// 🔥 HARD RESET (NO DATA RETURNS)
+document.getElementById("reset-btn").onclick = () => {
+  if (!confirm("⚠️ This will permanently delete ALL data.\n\nAre you sure?")) return;
+
+  localStorage.removeItem("dashboard");
+  localStorage.removeItem("currentWeek");
+  localStorage.removeItem("lastWeekUpdate");
+
+  dashboard = {};
+  currentWeek = 1;
+
   renderTable();
+
+  alert("✅ All data has been reset.");
 };
 
 // Initial render
