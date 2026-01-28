@@ -6,7 +6,7 @@
 
 <style>
   body {
-    font-family: Roboto, sans-serif;
+    font-family: Arial, sans-serif;
     padding: 20px;
     background: #fff;
   }
@@ -26,7 +26,7 @@
   }
 
   .title-img {
-    height: 1em; /* same height as text */
+    height: 1em;
     width: auto;
   }
 
@@ -88,4 +88,132 @@
   @media (max-width:480px) {
     .groups { grid-template-columns: 1fr; }
   }
-</sty
+</style>
+</head>
+
+<body>
+
+<!-- ---------- TITLE ---------- -->
+<div class="title-container">
+  <img src="download.png" alt="icon" class="title-img">
+  <h1>Button Counter</h1>
+  <img src="download.png" alt="icon" class="title-img">
+</div>
+
+<div id="current-week">Current Week: 1</div>
+
+<!-- ---------- BUTTON GROUPS ---------- -->
+<div class="groups">
+
+  <div class="group"><h2>10</h2>
+    <button class="yellow">Ice Block</button>
+    <button class="yellow">Sit with friend</button>
+    <button class="yellow">Stationery Pack</button>
+    <button class="yellow">Tattoo</button>
+  </div>
+
+  <div class="group"><h2>30</h2>
+    <button class="blue">Duty with a teacher</button>
+    <button class="blue">Game with a friend</button>
+    <button class="blue">Special chair in class</button>
+  </div>
+
+  <div class="group"><h2>50</h2>
+    <button class="green">Notepad</button>
+    <button class="green">Lolly Bag</button>
+    <button class="green">15 mins computer time</button>
+    <button class="green">Morning tea with 3 friends</button>
+  </div>
+
+  <div class="group"><h2>75</h2>
+    <button class="orange">Handball</button>
+    <button class="orange">30 mins computer time</button>
+    <button class="orange">20 mins computer time with friend</button>
+  </div>
+
+  <div class="group"><h2>100</h2>
+    <button class="purple">Lanyard</button>
+    <button class="purple">Free choice in class</button>
+  </div>
+
+  <div class="group"><h2>150</h2>
+    <button class="pink">BYO morning tea with teacher</button>
+    <button class="pink">Pick a prize</button>
+    <button class="pink">Mentor in another class</button>
+  </div>
+
+  <div class="group"><h2>250</h2>
+    <button class="red">$2 tuckshop voucher</button>
+    <button class="red">Dodgeball for your whole class</button>
+    <button class="red">Free play for whole class</button>
+  </div>
+
+  <div class="group"><h2>300</h2>
+    <button class="pastelpurple">Morning Tea with DP</button>
+    <button class="pastelpurple">Games Room (Nintendo Switch)</button>
+  </div>
+
+  <div class="group"><h2>400</h2>
+    <button class="background">400 Badge</button>
+    <button class="background">$3 tuckshop voucher</button>
+  </div>
+
+</div>
+
+<script>
+const WEEKS = 10;
+const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+const buttonGroups = {
+  "Ice Block":"10","Sit with friend":"10","Stationery Pack":"10","Tattoo":"10",
+  "Duty with a teacher":"30","Game with a friend":"30","Special chair in class":"30",
+  "Notepad":"50","Lolly Bag":"50","15 mins computer time":"50","Morning tea with 3 friends":"50",
+  "Handball":"75","30 mins computer time":"75","20 mins computer time with friend":"75",
+  "Lanyard":"100","Free choice in class":"100",
+  "BYO morning tea with teacher":"150","Pick a prize":"150","Mentor in another class":"150",
+  "$2 tuckshop voucher":"250","Dodgeball for your whole class":"250","Free play for whole class":"250",
+  "Morning Tea with DP":"300","Games Room (Nintendo Switch)":"300",
+  "400 Badge":"400","$3 tuckshop voucher":"400"
+};
+
+let dashboard = JSON.parse(localStorage.getItem("dashboard")) || {};
+let currentWeek = parseInt(localStorage.getItem("currentWeek")) || 1;
+let lastWeekUpdate = parseInt(localStorage.getItem("lastWeekUpdate")) || Date.now();
+
+function autoAdvanceWeek() {
+  const now = Date.now();
+  const passed = Math.floor((now - lastWeekUpdate) / ONE_WEEK_MS);
+  if (passed > 0) {
+    currentWeek = Math.min(WEEKS, currentWeek + passed);
+    lastWeekUpdate = now;
+    localStorage.setItem("currentWeek", currentWeek);
+    localStorage.setItem("lastWeekUpdate", lastWeekUpdate);
+  }
+}
+
+function updateWeekLabel() {
+  document.getElementById("current-week").textContent =
+    `Current Week: ${currentWeek}`;
+}
+
+function clickButton(name) {
+  if (!dashboard[name]) {
+    dashboard[name] = {
+      group: buttonGroups[name],
+      weeks: Array(WEEKS).fill(0)
+    };
+  }
+  dashboard[name].weeks[currentWeek - 1]++;
+  localStorage.setItem("dashboard", JSON.stringify(dashboard));
+}
+
+document.querySelectorAll("button").forEach(btn => {
+  btn.onclick = () => clickButton(btn.textContent.trim());
+});
+
+autoAdvanceWeek();
+updateWeekLabel();
+</script>
+
+</body>
+</html>
