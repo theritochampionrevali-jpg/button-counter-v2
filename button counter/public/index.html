@@ -5,9 +5,38 @@
 <title>Richlands East State School Eagle Shop</title>
 
 <style>
+  /* ---------- PAGE WRAPPER WITH BACKGROUND ---------- */
+  .page-wrapper {
+    position: relative;
+    min-height: 100vh; /* full screen */
+    padding: 20px;
+    background: url('download.png') no-repeat center center;
+    background-size: cover;
+    filter: blur(8px); /* blur the background logo */
+    overflow: hidden;
+  }
+
+  /* overlay to make buttons more readable */
+  .page-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(255,255,255,0.3); /* light semi-transparent layer */
+    z-index: 0;
+  }
+
+  /* content must be on top of the background */
+  .page-wrapper > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ---------- BODY & TEXT ---------- */
   body {
     font-family: Arial, sans-serif;
-    padding: 20px;
+    margin: 0;
+    padding: 0;
     background: #fff;
   }
 
@@ -16,18 +45,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5em;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
   }
 
   .title-container h1 {
     font-size: 2.5rem;
     margin: 0;
-  }
-
-  .title-img {
-    height: 2.2em;
-    width: auto;
+    text-align: center;
   }
 
   #current-week {
@@ -36,7 +60,7 @@
     margin-bottom: 20px;
   }
 
-  /* ---------- GROUPS ---------- */
+  /* ---------- BUTTON GROUPS ---------- */
   .groups {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -47,7 +71,7 @@
 
   .group {
     border: 3px solid #333;
-    background: #f2f2f2;
+    background: rgba(242,242,242,0.95); /* slightly transparent to blend with bg */
     padding: 16px;
     border-radius: 10px;
     text-align: center;
@@ -88,76 +112,78 @@
   @media (max-width:480px) {
     .groups { grid-template-columns: 1fr; }
   }
+
 </style>
 </head>
 
 <body>
 
-<!-- ---------- TITLE ---------- -->
-<div class="title-container">
-  <img src="download.png" alt="icon" class="title-img">
-  <h1>Eagle Shop</h1>
-  <img src="download.png" alt="icon" class="title-img">
-</div>
+<div class="page-wrapper">
 
-<div id="current-week">Current Week: 1</div>
-
-<!-- ---------- BUTTON GROUPS ---------- -->
-<div class="groups">
-
-  <div class="group"><h2>10</h2>
-    <button class="yellow">Ice Block</button>
-    <button class="yellow">Sit with friend</button>
-    <button class="yellow">Stationery Pack</button>
-    <button class="yellow">Tattoo</button>
+  <!-- ---------- TITLE ---------- -->
+  <div class="title-container">
+    <h1>Button Counter</h1>
   </div>
 
-  <div class="group"><h2>30</h2>
-    <button class="blue">Duty with a teacher</button>
-    <button class="blue">Game with a friend</button>
-    <button class="blue">Special chair in class</button>
-  </div>
+  <div id="current-week">Current Week: 1</div>
 
-  <div class="group"><h2>50</h2>
-    <button class="green">Notepad</button>
-    <button class="green">Lolly Bag</button>
-    <button class="green">15 mins computer time</button>
-    <button class="green">Morning tea with 3 friends</button>
-  </div>
+  <!-- ---------- BUTTON GROUPS ---------- -->
+  <div class="groups">
 
-  <div class="group"><h2>75</h2>
-    <button class="orange">Handball</button>
-    <button class="orange">30 mins computer time</button>
-    <button class="orange">20 mins computer time with friend</button>
-  </div>
+    <div class="group"><h2>10</h2>
+      <button class="yellow">Ice Block</button>
+      <button class="yellow">Sit with friend</button>
+      <button class="yellow">Stationery Pack</button>
+      <button class="yellow">Tattoo</button>
+    </div>
 
-  <div class="group"><h2>100</h2>
-    <button class="purple">Lanyard</button>
-    <button class="purple">Free choice in class</button>
-  </div>
+    <div class="group"><h2>30</h2>
+      <button class="blue">Duty with a teacher</button>
+      <button class="blue">Game with a friend</button>
+      <button class="blue">Special chair in class</button>
+    </div>
 
-  <div class="group"><h2>150</h2>
-    <button class="pink">BYO morning tea with teacher</button>
-    <button class="pink">Pick a prize</button>
-    <button class="pink">Mentor in another class</button>
-  </div>
+    <div class="group"><h2>50</h2>
+      <button class="green">Notepad</button>
+      <button class="green">Lolly Bag</button>
+      <button class="green">15 mins computer time</button>
+      <button class="green">Morning tea with 3 friends</button>
+    </div>
 
-  <div class="group"><h2>250</h2>
-    <button class="red">$2 tuckshop voucher</button>
-    <button class="red">Dodgeball for your whole class</button>
-    <button class="red">Free play for whole class</button>
-  </div>
+    <div class="group"><h2>75</h2>
+      <button class="orange">Handball</button>
+      <button class="orange">30 mins computer time</button>
+      <button class="orange">20 mins computer time with friend</button>
+    </div>
 
-  <div class="group"><h2>300</h2>
-    <button class="pastelpurple">Morning Tea with DP</button>
-    <button class="pastelpurple">Games Room (Nintendo Switch)</button>
-  </div>
+    <div class="group"><h2>100</h2>
+      <button class="purple">Lanyard</button>
+      <button class="purple">Free choice in class</button>
+    </div>
 
-  <div class="group"><h2>400</h2>
-    <button class="background">400 Badge</button>
-    <button class="background">$3 tuckshop voucher</button>
-  </div>
+    <div class="group"><h2>150</h2>
+      <button class="pink">BYO morning tea with teacher</button>
+      <button class="pink">Pick a prize</button>
+      <button class="pink">Mentor in another class</button>
+    </div>
 
+    <div class="group"><h2>250</h2>
+      <button class="red">$2 tuckshop voucher</button>
+      <button class="red">Dodgeball for your whole class</button>
+      <button class="red">Free play for whole class</button>
+    </div>
+
+    <div class="group"><h2>300</h2>
+      <button class="pastelpurple">Morning Tea with DP</button>
+      <button class="pastelpurple">Games Room (Nintendo Switch)</button>
+    </div>
+
+    <div class="group"><h2>400</h2>
+      <button class="background">400 Badge</button>
+      <button class="background">$3 tuckshop voucher</button>
+    </div>
+
+  </div>
 </div>
 
 <script>
@@ -217,6 +243,3 @@ updateWeekLabel();
 
 </body>
 </html>
-
-
-
