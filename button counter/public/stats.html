@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <title>Eagle Shop Stats</title>
 
+<!-- Load Roboto font -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+<!-- Load SheetJS library for Excel export -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
 <style>
   body { font-family: Roboto, sans-serif; padding:20px; }
   h1 { text-align:center; }
@@ -28,9 +34,10 @@
   <span id="week-label">Week 1</span>
   <button id="next">Next ➡</button><br>
   <button class="reset" id="reset">Reset ALL Data</button>
+  <button id="export">💾 Export to Excel</button>
 </div>
 
-<table>
+<table id="stats-table">
 <thead>
 <tr>
   <th>Group</th><th>Button</th>
@@ -44,10 +51,10 @@
 
 <script>
 const WEEKS = 10;
-
 let dashboard = JSON.parse(localStorage.getItem("dashboard")) || {};
 let currentWeek = parseInt(localStorage.getItem("currentWeek")) || 1;
 
+// --------- Render Table ----------
 function render() {
   const body = document.getElementById("table");
   body.innerHTML = "";
@@ -67,6 +74,7 @@ function render() {
     });
 }
 
+// --------- Week Navigation ----------
 document.getElementById("prev").onclick = ()=>{
   if(currentWeek>1){
     currentWeek--;
@@ -83,36 +91,34 @@ document.getElementById("next").onclick = ()=>{
   }
 };
 
+// --------- Reset Data ----------
 document.getElementById("reset").onclick = () => {
   if (!confirm("Delete ALL data?")) return;
-
-  const resetTime = Date.now();
-
-  // Mark reset
-  localStorage.setItem("resetTime", resetTime);
-
-  // Remove ONLY our data
   localStorage.removeItem("dashboard");
   localStorage.removeItem("currentWeek");
   localStorage.removeItem("lastWeekUpdate");
-  localStorage.removeItem("dashboardSavedAt");
-
-  // Reset in-memory state
   dashboard = {};
   currentWeek = 1;
-
-  // Persist clean state
-  localStorage.setItem("currentWeek", 1);
-
+  localStorage.setItem("currentWeek",1);
   render();
-
   alert("✅ All data has been reset.");
 };
 
+// --------- Export to Excel ----------
+document.getElementById("export").onclick = () => {
+  // Grab the table
+  const table = document.getElementById("stats-table");
 
+  // Convert table to workbook
+  const wb = XLSX.utils.table_to_book(table, { sheet: "Stats" });
+
+  // Download Excel file
+  XLSX.writeFile(wb, "EagleShopStats.xlsx");
+};
+
+// --------- Initial render ----------
 render();
 </script>
 
 </body>
 </html>
-
