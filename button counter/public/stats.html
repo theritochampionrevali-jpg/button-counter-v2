@@ -50,75 +50,203 @@
 </table>
 
 <script>
+document.addEventListener("DOMContentLoaded", function () {
+
 const WEEKS = 10;
-let dashboard = JSON.parse(localStorage.getItem("dashboard")) || {};
+
+// ---------------- SAFE DATA LOAD ----------------
+let dashboard = JSON.parse(localStorage.getItem("dashboard") || "{}");
 let currentWeek = parseInt(localStorage.getItem("currentWeek")) || 1;
 
-// --------- Render Table ----------
-function render() {
-  const body = document.getElementById("table");
-  body.innerHTML = "";
-  document.getElementById("week-label").textContent = `Week ${currentWeek}`;
+let initialStock = parseInt(localStorage.getItem("initialStock")) || 0;
+let currentStock = parseInt(localStorage.getItem("currentStock")) || 0;
+let stockHistory = JSON.parse(localStorage.getItem("stockHistory") || "[]");
 
-  Object.entries(dashboard)
-    .sort((a,b)=>parseInt(a[1].group)-parseInt(b[1].group))
-    .forEach(([name,data])=>{
-      const total = data.weeks.reduce((a,b)=>a+b,0);
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${data.group}</td>
-        <td>${name}</td>
-        ${data.weeks.map((v,i)=>`<td class="${i===currentWeek-1?'current-week':''}">${v}</td>`).join("")}
-        <td>${total}</td>`;
-      body.appendChild(row);
-    });
+// ---------------- SAFE ELEMENT GETTER ----------------
+function safe(id) {
+  return document.getElementById(id);
 }
 
-// --------- Week Navigation ----------
-document.getElementById("prev").onclick = ()=>{
-  if(currentWeek>1){
+// ---------------- RENDER BUTTON TABLE ----------------
+function render() {
+
+  const tableBody = safe("table");
+  if (!tableBody) return;
+
+  tableBody.innerHTML = "";
+
+  if (safe("week-label"))
+    safe("week-label").textContent = `Week ${currentWeek}`;
+
+  if (safe("current-stock"))
+    safe("current-stock").textContent = currentStock;
+
+  Object.entries(dashboard).forEach(([name, data]) => {
+
+    if (!data.weeks) data.weeks = new Array(WEEKS).fill(0);
+
+    const total = data.weeks.reduce((a, b) => a + b, 0);
+
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>${data.group || ""}</td>
+      <td>${name}</td>
+      ${data.weeks.map((v, i) =>
+        `<td class="${i === currentWeek - 1 ? 'current-week' : ''}">${v}</td>`
+      ).join("")}
+      <td>${total}</td>
+    `;
+
+    tableBody.appendChild(row);
+  });
+
+  renderStockHistory();
+}
+
+// ---------------- RENDER STOCK TABLE ----------------
+function renderStockHistory() {
+
+  const stockBody = safe("stock-body");
+  if (!stockBody) return;
+
+  stockBody.innerHTML = "";
+
+  stockHistory.forEach(entry => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>Week ${entry.week}</td>
+      <td>${entry.used}</td>
+      <td>${entry.before}</td>
+      <td>${entry.after}</td>
+    `;
+    stockBody.appendChild(row);
+  });
+}
+
+// ---------------- WEEK NAVIGATION ----------------
+if (safe("prev"))
+safe("prev").onclick = function () {
+  if (currentWeek > 1) {
     currentWeek--;
-    localStorage.setItem("currentWeek",currentWeek);
+    localStorage.setItem("currentWeek", currentWeek);
     render();
   }
 };
 
-document.getElementById("next").onclick = ()=>{
-  if(currentWeek<WEEKS){
+if (safe("next"))
+safe("next").onclick = function () {
+  if (currentWeek < WEEKS) {
     currentWeek++;
-    localStorage.setItem("currentWeek",currentWeek);
+    localStorage.setItem("currentWeek", currentWeek);
     render();
   }
 };
 
-// --------- Reset Data ----------
-document.getElementById("reset").onclick = () => {
-  if (!confirm("Delete ALL data?")) return;
-  localStorage.removeItem("dashboard");
-  localStorage.removeItem("currentWeek");
-  localStorage.removeItem("lastWeekUpdate");
-  dashboard = {};
-  currentWeek = 1;
-  localStorage.setItem("currentWeek",1);
+// ---------------- SET STOCK ----------------
+if (safe("set-stock"))
+safe("set-stock").onclick = function () {
+
+  const input = safe("initial-stock");
+  if (!input) return;
+
+  const value = parseInt(input.value);
+
+  if (isNaN(value) || value <= 0) {
+    alert("Enter valid stock amount");
+    return;
+  }
+
+  initialStock = value;
+  currentStock = value;
+
+  localStorage.setItem("initialStock", initialStock);
+  localStorage.setItem("currentStock", currentStock);
+
   render();
-  alert("✅ All data has been reset.");
 };
 
-// --------- Export to Excel ----------
-document.getElementById("export").onclick = () => {
-  // Grab the table
-  const table = document.getElementById("stats-table");
+// ---------------- CLOSE WEEK ----------------
+if (safe("calculate-stock"))
+safe("calculate-stock").onclick = function () {
 
-  // Convert table to workbook
-  const wb = XLSX.utils.table_to_book(table, { sheet: "Stats" });
+  let weeklyTotal = 0;
 
-  // Download Excel file
+  Object.values(dashboard).forEach(data => {
+    if (data.weeks && data.weeks[currentWeek - 1])
+      weeklyTotal += data.weeks[currentWeek - 1];
+  });
+
+  if (weeklyTotal === 0) {
+    alert("No clicks this week");
+    return;
+  }
+
+  const stockBefore = currentStock;
+  const stockAfter = currentStock - weeklyTotal;
+
+  if (stockAfter < 0) {
+    alert("Not enough stock");
+    return;
+  }
+
+  currentStock = stockAfter;
+
+  stockHistory.push({
+    week: currentWeek,
+    used: weeklyTotal,
+    before: stockBefore,
+    after: stockAfter
+  });
+
+  localStorage.setItem("currentStock", currentStock);
+  localStorage.setItem("stockHistory", JSON.stringify(stockHistory));
+
+  render();
+};
+
+// ---------------- RESET ----------------
+if (safe("reset"))
+safe("reset").onclick = function () {
+  if (!confirm("Delete ALL data?")) return;
+
+  localStorage.clear();
+  dashboard = {};
+  stockHistory = [];
+  currentWeek = 1;
+  currentStock = 0;
+
+  localStorage.setItem("currentWeek", 1);
+
+  render();
+};
+
+// ---------------- EXPORT ----------------
+if (safe("export"))
+safe("export").onclick = function () {
+
+  const wb = XLSX.utils.book_new();
+
+  if (safe("stats-table")) {
+    const statsSheet = XLSX.utils.table_to_sheet(safe("stats-table"));
+    XLSX.utils.book_append_sheet(wb, statsSheet, "Button Stats");
+  }
+
+  if (safe("stock-table")) {
+    const stockSheet = XLSX.utils.table_to_sheet(safe("stock-table"));
+    XLSX.utils.book_append_sheet(wb, stockSheet, "Stock History");
+  }
+
   XLSX.writeFile(wb, "EagleShopStats.xlsx");
 };
 
-// --------- Initial render ----------
+// ---------------- INITIAL RENDER ----------------
 render();
+
+});
 </script>
+
 
 </body>
 </html>
+
