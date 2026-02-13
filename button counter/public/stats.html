@@ -94,7 +94,8 @@ function render() {
     if (data.remainingStock === undefined)
       data.remainingStock = data.initialStock;
 
-    const total = data.weeks.reduce((a,b)=>a+b,0);
+    // Calculate the total of all weeks combined
+    const total = data.weeks.reduce((a,b) => a + b, 0);
 
     const row = document.createElement("tr");
 
@@ -102,8 +103,8 @@ function render() {
       <td>${data.group || ""}</td>
       <td>${name}</td>
 
-      ${data.weeks.map((v,i)=>
-        `<td class="${i===currentWeek-1?'current-week':''}">${v}</td>`
+      ${data.weeks.map((v, i) =>
+        `<td class="${i === currentWeek - 1 ? 'current-week' : ''}">${v}</td>`
       ).join("")}
 
       <td>${total}</td>
@@ -128,7 +129,6 @@ function render() {
 
 // ---------------- SET STOCK ----------------
 window.setStock = function(name, value) {
-
   const amount = parseInt(value);
   if (isNaN(amount) || amount < 0) return;
 
@@ -154,7 +154,7 @@ function closeWeek() {
     const before = data.remainingStock;
     const after = before - sold;
 
-    // Allow stock to go to 0
+    // Update the remaining stock for the button
     data.remainingStock = after < 0 ? 0 : after;
 
     stockHistory.push({
@@ -179,7 +179,7 @@ function renderStockHistory() {
   const body = document.getElementById("stock-body");
   body.innerHTML = "";
 
-  // Only show remaining stock per item per week
+  // Display remaining stock per item per week
   stockHistory.forEach(entry => {
 
     const row = document.createElement("tr");
