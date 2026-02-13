@@ -37,7 +37,6 @@
   <button id="export">💾 Export to Excel</button>
 </div>
 
-
 <table id="stats-table">
 <thead>
 <tr>
@@ -58,17 +57,13 @@
 <table id="stock-table">
   <thead>
     <tr>
-      <th>Week</th>
       <th>Button</th>
-      <th>Sold</th>
-      <th>Stock Before</th>
-      <th>Stock After</th>
+      <th>Week</th>
+      <th>Remaining Stock</th>
     </tr>
   </thead>
   <tbody id="stock-body"></tbody>
 </table>
-
-
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
@@ -78,6 +73,7 @@ const WEEKS = 10;
 let dashboard = JSON.parse(localStorage.getItem("dashboard") || "{}");
 let currentWeek = parseInt(localStorage.getItem("currentWeek")) || 1;
 let stockHistory = JSON.parse(localStorage.getItem("stockHistory") || "[]");
+let closedWeeks = JSON.parse(localStorage.getItem("closedWeeks") || "[]");
 
 // ---------------- RENDER MAIN TABLE ----------------
 function render() {
@@ -87,7 +83,11 @@ function render() {
 
   document.getElementById("week-label").textContent = `Week ${currentWeek}`;
 
-  Object.entries(dashboard).forEach(([name, data]) => {
+  // Sort the buttons by group value in ascending order
+  const sortedDashboard = Object.entries(dashboard)
+    .sort((a, b) => a[1].group - b[1].group); // Sorting by the 'group' value in ascending order
+
+  sortedDashboard.forEach(([name, data]) => {
 
     if (!data.weeks) data.weeks = new Array(WEEKS).fill(0);
     if (data.initialStock === undefined) data.initialStock = 0;
@@ -142,10 +142,15 @@ window.setStock = function(name, value) {
 // ---------------- CLOSE WEEK ----------------
 function closeWeek() {
 
+  // Check if the week has already been closed
+  if (closedWeeks.includes(currentWeek)) {
+    alert("This week has already been closed.");
+    return;
+  }
+
   Object.entries(dashboard).forEach(([name, data]) => {
 
     const sold = data.weeks[currentWeek - 1] || 0;
-
     const before = data.remainingStock;
     const after = before - sold;
 
@@ -155,13 +160,13 @@ function closeWeek() {
     stockHistory.push({
       week: currentWeek,
       button: name,
-      sold: sold,
-      before: before,
-      after: data.remainingStock
+      remainingStock: data.remainingStock
     });
 
   });
 
+  closedWeeks.push(currentWeek);
+  localStorage.setItem("closedWeeks", JSON.stringify(closedWeeks));
   localStorage.setItem("dashboard", JSON.stringify(dashboard));
   localStorage.setItem("stockHistory", JSON.stringify(stockHistory));
 
@@ -174,16 +179,15 @@ function renderStockHistory() {
   const body = document.getElementById("stock-body");
   body.innerHTML = "";
 
+  // Only show remaining stock per item per week
   stockHistory.forEach(entry => {
 
     const row = document.createElement("tr");
 
     row.innerHTML = `
-      <td>Week ${entry.week}</td>
       <td>${entry.button}</td>
-      <td>${entry.sold}</td>
-      <td>${entry.before}</td>
-      <td>${entry.after}</td>
+      <td>Week ${entry.week}</td>
+      <td>${entry.remainingStock}</td>
     `;
 
     body.appendChild(row);
@@ -220,6 +224,7 @@ document.getElementById("reset").onclick = function () {
   localStorage.clear();
   dashboard = {};
   stockHistory = [];
+  closedWeeks = [];
   currentWeek = 1;
   localStorage.setItem("currentWeek", 1);
   render();
@@ -249,10 +254,5 @@ render();
 });
 </script>
 
-
-
 </body>
 </html>
-
-
-
