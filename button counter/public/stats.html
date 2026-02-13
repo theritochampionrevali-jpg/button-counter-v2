@@ -32,10 +32,19 @@
 <div class="controls">
   <button id="prev">⬅ Previous</button>
   <span id="week-label">Week 1</span>
-  <button id="next">Next ➡</button><br>
+  <button id="next">Next ➡</button><br><br>
+
+  <!-- STOCK CONTROLS -->
+  <input type="number" id="initial-stock" placeholder="Enter Initial Stock">
+  <button id="set-stock">Set Stock</button>
+  <button id="calculate-stock">Close This Week</button><br>
+  <strong>Current Stock: <span id="current-stock">0</span></strong>
+  <br><br>
+
   <button class="reset" id="reset">Reset ALL Data</button>
   <button id="export">💾 Export to Excel</button>
 </div>
+
 
 <table id="stats-table">
 <thead>
@@ -48,6 +57,21 @@
 </thead>
 <tbody id="table"></tbody>
 </table>
+
+  <h2>Weekly Stock History</h2>
+
+<table id="stock-table">
+  <thead>
+    <tr>
+      <th>Week</th>
+      <th>Buttons Used</th>
+      <th>Stock Before</th>
+      <th>Stock After</th>
+    </tr>
+  </thead>
+  <tbody id="stock-body"></tbody>
+</table>
+
 
 <script>
 const WEEKS = 10;
@@ -122,3 +146,4 @@ render();
 
 </body>
 </html>
+
