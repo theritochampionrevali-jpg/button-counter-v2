@@ -33,14 +33,6 @@
   <button id="prev">⬅ Previous</button>
   <span id="week-label">Week 1</span>
   <button id="next">Next ➡</button><br><br>
-
-  <!-- STOCK CONTROLS -->
-  <input type="number" id="initial-stock" placeholder="Enter Initial Stock">
-  <button id="set-stock">Set Stock</button>
-  <button id="calculate-stock">Close This Week</button><br>
-  <strong>Current Stock: <span id="current-stock">0</span></strong>
-  <br><br>
-
   <button class="reset" id="reset">Reset ALL Data</button>
   <button id="export">💾 Export to Excel</button>
 </div>
@@ -58,6 +50,7 @@
   <th>Remaining Stock</th>
 </tr>
 </thead>
+  
 <tbody id="table"></tbody>
 </table>
 
@@ -69,12 +62,13 @@
       <th>Week</th>
       <th>Button</th>
       <th>Sold</th>
-      <th>Stock Before</th>
-      <th>Stock After</th>
+      <th>Before</th>
+      <th>After</th>
     </tr>
   </thead>
   <tbody id="stock-body"></tbody>
 </table>
+
 
 
 
@@ -86,6 +80,7 @@ const WEEKS = 10;
 let dashboard = JSON.parse(localStorage.getItem("dashboard") || "{}");
 let currentWeek = parseInt(localStorage.getItem("currentWeek")) || 1;
 let stockHistory = JSON.parse(localStorage.getItem("stockHistory") || "[]");
+let closedWeeks = JSON.parse(localStorage.getItem("closedWeeks") || "[]");
 
 // ---------------- RENDER MAIN TABLE ----------------
 function render() {
@@ -120,7 +115,7 @@ function render() {
         <input type="number"
                min="0"
                value="${data.initialStock}"
-               style="width:80px"
+               style="width:70px"
                onchange="setStock('${name}', this.value)">
       </td>
 
@@ -147,42 +142,51 @@ window.setStock = function(name, value) {
   render();
 };
 
-// ---------------- CLOSE WEEK ----------------
+// ---------------- CLOSE WEEK (SAFE) ----------------
 function closeWeek() {
+
+  if (closedWeeks.includes(currentWeek)) {
+    alert("This week has already been closed.");
+    return;
+  }
 
   Object.entries(dashboard).forEach(([name, data]) => {
 
     const sold = data.weeks[currentWeek - 1] || 0;
-
     const before = data.remainingStock;
-    const after = before - sold;
+    const after = Math.max(before - sold, 0);
 
-    // Allow stock to go to 0
-    data.remainingStock = after < 0 ? 0 : after;
+    data.remainingStock = after;
 
     stockHistory.push({
       week: currentWeek,
       button: name,
       sold: sold,
       before: before,
-      after: data.remainingStock
+      after: after
     });
 
   });
 
+  closedWeeks.push(currentWeek);
+
   localStorage.setItem("dashboard", JSON.stringify(dashboard));
   localStorage.setItem("stockHistory", JSON.stringify(stockHistory));
+  localStorage.setItem("closedWeeks", JSON.stringify(closedWeeks));
 
   render();
 }
 
-// ---------------- RENDER STOCK HISTORY ----------------
+// ---------------- RENDER STOCK HISTORY (NEATER) ----------------
 function renderStockHistory() {
 
   const body = document.getElementById("stock-body");
   body.innerHTML = "";
 
-  stockHistory.forEach(entry => {
+  // Sort by week descending
+  const sorted = [...stockHistory].sort((a,b)=>b.week - a.week);
+
+  sorted.forEach(entry => {
 
     const row = document.createElement("tr");
 
@@ -218,6 +222,7 @@ document.getElementById("next").onclick = function() {
 // ---------------- ADD CLOSE WEEK BUTTON ----------------
 const closeBtn = document.createElement("button");
 closeBtn.textContent = "Close This Week";
+closeBtn.style.marginLeft = "10px";
 closeBtn.onclick = closeWeek;
 document.querySelector(".controls").appendChild(closeBtn);
 
@@ -228,6 +233,7 @@ document.getElementById("reset").onclick = function () {
   localStorage.clear();
   dashboard = {};
   stockHistory = [];
+  closedWeeks = [];
   currentWeek = 1;
   localStorage.setItem("currentWeek", 1);
   render();
@@ -258,9 +264,9 @@ render();
 </script>
 
 
-
 </body>
 </html>
+
 
 
 
