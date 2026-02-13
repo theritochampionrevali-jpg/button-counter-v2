@@ -150,7 +150,10 @@ function closeWeek() {
     return;
   }
 
-  Object.entries(dashboard).forEach(([name, data]) => {
+ Object.entries(dashboard)
+  .sort((a, b) => parseInt(a[1].group) - parseInt(b[1].group))
+  .forEach(([name, data]) => {
+
 
     const sold = data.weeks[currentWeek - 1] || 0;
     const before = data.remainingStock;
@@ -266,6 +269,7 @@ render();
 
 </body>
 </html>
+
 
 
 
