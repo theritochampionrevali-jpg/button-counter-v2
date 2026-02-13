@@ -37,7 +37,6 @@
   <button id="export">💾 Export to Excel</button>
 </div>
 
-
 <table id="stats-table">
 <thead>
 <tr>
@@ -50,7 +49,7 @@
   <th>Remaining Stock</th>
 </tr>
 </thead>
-  
+
 <tbody id="table"></tbody>
 </table>
 
@@ -69,14 +68,13 @@
   <tbody id="stock-body"></tbody>
 </table>
 
-
-
-
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
 const WEEKS = 10;
-  const BUTTONS = [
+
+// PRE-DEFINED BUTTON LIST (Fixed commas)
+const BUTTONS = [
   { name: "Ice Block", group: 10 },
   { name: "Sit with friend", group: 10 },
   { name: "Stationery Pack", group: 10 },
@@ -84,31 +82,30 @@ const WEEKS = 10;
   { name: "Duty with a teacher", group: 30 },
   { name: "Game with a friend", group: 30 },
   { name: "Special chair in class", group: 30 },
-  { name: "Notepad", group: 50 }
-  { name: "Lolly bag", group: 50 }
-  { name: "15 mins computer time", group: 50 }
-  { name: "Morning tea with 3 friends", group: 50 }
-  { name: "Handball", group: 75 }
-  { name: "30 mins computer time", group: 75 }
-  { name: "20 mins computer time with friend", group: 75 }
-  { name: "Lanyard", group: 100 }
-  { name: "Free choice in class", group: 100 }
-  { name: "BYO morning tea with teacher", group: 150 }
-  { name: "Pick a prize", group: 150 }
-  { name: "Mentor in another class", group: 150 }
-  { name: "$2 tuckshop voucher", group: 250 }
-  { name: "Dodgeball for your whole class", group: 250 }
-  { name: "Free play for whole class", group: 250 }
-  { name: "Morning tea with DP", group: 300 }
-  { name: "Games Room (Ninento Switch)", group: 300 }
-  { name: "400 badge", group: 400 }
+  { name: "Notepad", group: 50 },
+  { name: "Lolly bag", group: 50 },
+  { name: "15 mins computer time", group: 50 },
+  { name: "Morning tea with 3 friends", group: 50 },
+  { name: "Handball", group: 75 },
+  { name: "30 mins computer time", group: 75 },
+  { name: "20 mins computer time with friend", group: 75 },
+  { name: "Lanyard", group: 100 },
+  { name: "Free choice in class", group: 100 },
+  { name: "BYO morning tea with teacher", group: 150 },
+  { name: "Pick a prize", group: 150 },
+  { name: "Mentor in another class", group: 150 },
+  { name: "$2 tuckshop voucher", group: 250 },
+  { name: "Dodgeball for your whole class", group: 250 },
+  { name: "Free play for whole class", group: 250 },
+  { name: "Morning tea with DP", group: 300 },
+  { name: "Games Room (Ninento Switch)", group: 300 },
+  { name: "400 badge", group: 400 },
   { name: "$3 tuckshop voucher", group: 400 }
-  
-  
 ];
 
 let dashboard = JSON.parse(localStorage.getItem("dashboard") || "{}");
-  // If dashboard empty, create all buttons
+
+// Initialize dashboard if empty
 if (Object.keys(dashboard).length === 0) {
   BUTTONS.forEach(btn => {
     dashboard[btn.name] = {
@@ -134,40 +131,38 @@ function render() {
 
   document.getElementById("week-label").textContent = `Week ${currentWeek}`;
 
-  Object.entries(dashboard).forEach(([name, data]) => {
+  // Sort the buttons by group number in ascending order
+  Object.entries(dashboard)
+    .sort((a, b) => a[1].group - b[1].group) // Sort by group
+    .forEach(([name, data]) => {
 
-    if (!data.weeks) data.weeks = new Array(WEEKS).fill(0);
-    if (data.initialStock === undefined) data.initialStock = 0;
-    if (data.remainingStock === undefined)
-      data.remainingStock = data.initialStock;
+      if (!data.weeks) data.weeks = new Array(WEEKS).fill(0);
+      if (data.initialStock === undefined) data.initialStock = 0;
+      if (data.remainingStock === undefined) data.remainingStock = data.initialStock;
 
-    const total = data.weeks.reduce((a,b)=>a+b,0);
+      const total = data.weeks.reduce((a,b)=>a+b,0);
 
-    const row = document.createElement("tr");
+      const row = document.createElement("tr");
 
-    row.innerHTML = `
-      <td>${data.group || ""}</td>
-      <td>${name}</td>
+      row.innerHTML = `
+        <td>${data.group || ""}</td>
+        <td>${name}</td>
+        ${data.weeks.map((v,i)=>
+          `<td class="${i===currentWeek-1?'current-week':''}">${v}</td>`
+        ).join("")}
+        <td>${total}</td>
+        <td>
+          <input type="number"
+                 min="0"
+                 value="${data.initialStock}"
+                 style="width:70px"
+                 onchange="setStock('${name}', this.value)">
+        </td>
+        <td>${data.remainingStock}</td>
+      `;
 
-      ${data.weeks.map((v,i)=>
-        `<td class="${i===currentWeek-1?'current-week':''}">${v}</td>`
-      ).join("")}
-
-      <td>${total}</td>
-
-      <td>
-        <input type="number"
-               min="0"
-               value="${data.initialStock}"
-               style="width:70px"
-               onchange="setStock('${name}', this.value)">
-      </td>
-
-      <td>${data.remainingStock}</td>
-    `;
-
-    body.appendChild(row);
-  });
+      body.appendChild(row);
+    });
 
   localStorage.setItem("dashboard", JSON.stringify(dashboard));
   renderStockHistory();
@@ -175,7 +170,6 @@ function render() {
 
 // ---------------- SET STOCK ----------------
 window.setStock = function(name, value) {
-
   const amount = parseInt(value);
   if (isNaN(amount) || amount < 0) return;
 
@@ -186,7 +180,7 @@ window.setStock = function(name, value) {
   render();
 };
 
-// ---------------- CLOSE WEEK (SAFE) ----------------
+// ---------------- CLOSE WEEK ----------------
 function closeWeek() {
 
   if (closedWeeks.includes(currentWeek)) {
@@ -194,26 +188,25 @@ function closeWeek() {
     return;
   }
 
- Object.entries(dashboard)
-  .sort((a, b) => parseInt(a[1].group) - parseInt(b[1].group))
-  .forEach(([name, data]) => {
+  Object.entries(dashboard)
+    .sort((a, b) => a[1].group - b[1].group)
+    .forEach(([name, data]) => {
 
+      const sold = data.weeks[currentWeek - 1] || 0;
+      const before = data.remainingStock;
+      const after = Math.max(before - sold, 0);
 
-    const sold = data.weeks[currentWeek - 1] || 0;
-    const before = data.remainingStock;
-    const after = Math.max(before - sold, 0);
+      data.remainingStock = after;
 
-    data.remainingStock = after;
+      stockHistory.push({
+        week: currentWeek,
+        button: name,
+        sold: sold,
+        before: before,
+        after: after
+      });
 
-    stockHistory.push({
-      week: currentWeek,
-      button: name,
-      sold: sold,
-      before: before,
-      after: after
     });
-
-  });
 
   closedWeeks.push(currentWeek);
 
@@ -224,17 +217,15 @@ function closeWeek() {
   render();
 }
 
-// ---------------- RENDER STOCK HISTORY (NEATER) ----------------
+// ---------------- RENDER STOCK HISTORY ----------------
 function renderStockHistory() {
 
   const body = document.getElementById("stock-body");
   body.innerHTML = "";
 
-  // Sort by week descending
   const sorted = [...stockHistory].sort((a,b)=>b.week - a.week);
 
   sorted.forEach(entry => {
-
     const row = document.createElement("tr");
 
     row.innerHTML = `
@@ -255,7 +246,6 @@ document.getElementById("prev").onclick = function() {
     currentWeek--;
     localStorage.setItem("currentWeek", currentWeek);
     render();
-  }
 };
 
 document.getElementById("next").onclick = function() {
@@ -265,13 +255,6 @@ document.getElementById("next").onclick = function() {
     render();
   }
 };
-
-// ---------------- ADD CLOSE WEEK BUTTON ----------------
-const closeBtn = document.createElement("button");
-closeBtn.textContent = "Close This Week";
-closeBtn.style.marginLeft = "10px";
-closeBtn.onclick = closeWeek;
-document.querySelector(".controls").appendChild(closeBtn);
 
 // ---------------- RESET ----------------
 document.getElementById("reset").onclick = function () {
@@ -310,12 +293,5 @@ render();
 });
 </script>
 
-
 </body>
 </html>
-
-
-
-
-
-
