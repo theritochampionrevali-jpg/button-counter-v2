@@ -49,7 +49,8 @@
 <table id="stats-table">
 <thead>
 <tr>
-  <th>Group</th><th>Button</th>
+  <th>Group</th>
+  <th>Button</th>
   <th>W1</th><th>W2</th><th>W3</th><th>W4</th><th>W5</th>
   <th>W6</th><th>W7</th><th>W8</th><th>W9</th><th>W10</th>
   <th>Total</th>
@@ -60,19 +61,21 @@
 <tbody id="table"></tbody>
 </table>
 
-  <h2>Weekly Stock History</h2>
+<h2>Weekly Stock History</h2>
 
 <table id="stock-table">
   <thead>
     <tr>
       <th>Week</th>
-      <th>Buttons Used</th>
+      <th>Button</th>
+      <th>Sold</th>
       <th>Stock Before</th>
       <th>Stock After</th>
     </tr>
   </thead>
   <tbody id="stock-body"></tbody>
 </table>
+
 
 
 <script>
@@ -82,8 +85,9 @@ const WEEKS = 10;
 
 let dashboard = JSON.parse(localStorage.getItem("dashboard") || "{}");
 let currentWeek = parseInt(localStorage.getItem("currentWeek")) || 1;
+let stockHistory = JSON.parse(localStorage.getItem("stockHistory") || "[]");
 
-// ---------------- RENDER TABLE ----------------
+// ---------------- RENDER MAIN TABLE ----------------
 function render() {
 
   const body = document.getElementById("table");
@@ -94,11 +98,11 @@ function render() {
   Object.entries(dashboard).forEach(([name, data]) => {
 
     if (!data.weeks) data.weeks = new Array(WEEKS).fill(0);
-    if (!data.initialStock) data.initialStock = 0;
-    if (!data.remainingStock && data.remainingStock !== 0)
+    if (data.initialStock === undefined) data.initialStock = 0;
+    if (data.remainingStock === undefined)
       data.remainingStock = data.initialStock;
 
-    const total = data.weeks.reduce((a, b) => a + b, 0);
+    const total = data.weeks.reduce((a,b)=>a+b,0);
 
     const row = document.createElement("tr");
 
@@ -113,9 +117,9 @@ function render() {
       <td>${total}</td>
 
       <td>
-        <input type="number" 
-               value="${data.initialStock}" 
+        <input type="number"
                min="0"
+               value="${data.initialStock}"
                style="width:80px"
                onchange="setStock('${name}', this.value)">
       </td>
@@ -127,9 +131,10 @@ function render() {
   });
 
   localStorage.setItem("dashboard", JSON.stringify(dashboard));
+  renderStockHistory();
 }
 
-// ---------------- SET STOCK PER BUTTON ----------------
+// ---------------- SET STOCK ----------------
 window.setStock = function(name, value) {
 
   const amount = parseInt(value);
@@ -147,23 +152,50 @@ function closeWeek() {
 
   Object.entries(dashboard).forEach(([name, data]) => {
 
-    const weeklySales = data.weeks[currentWeek - 1] || 0;
+    const sold = data.weeks[currentWeek - 1] || 0;
 
-    if (weeklySales > 0) {
-      const newStock = data.remainingStock - weeklySales;
+    const before = data.remainingStock;
+    const after = before - sold;
 
-      if (newStock < 0) {
-        alert(`${name} does not have enough stock!`);
-        return;
-      }
+    // Allow stock to go to 0
+    data.remainingStock = after < 0 ? 0 : after;
 
-      data.remainingStock = newStock;
-    }
+    stockHistory.push({
+      week: currentWeek,
+      button: name,
+      sold: sold,
+      before: before,
+      after: data.remainingStock
+    });
 
   });
 
   localStorage.setItem("dashboard", JSON.stringify(dashboard));
+  localStorage.setItem("stockHistory", JSON.stringify(stockHistory));
+
   render();
+}
+
+// ---------------- RENDER STOCK HISTORY ----------------
+function renderStockHistory() {
+
+  const body = document.getElementById("stock-body");
+  body.innerHTML = "";
+
+  stockHistory.forEach(entry => {
+
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>Week ${entry.week}</td>
+      <td>${entry.button}</td>
+      <td>${entry.sold}</td>
+      <td>${entry.before}</td>
+      <td>${entry.after}</td>
+    `;
+
+    body.appendChild(row);
+  });
 }
 
 // ---------------- WEEK NAVIGATION ----------------
@@ -185,7 +217,7 @@ document.getElementById("next").onclick = function() {
 
 // ---------------- ADD CLOSE WEEK BUTTON ----------------
 const closeBtn = document.createElement("button");
-closeBtn.textContent = "Close This Week (Update Stock)";
+closeBtn.textContent = "Close This Week";
 closeBtn.onclick = closeWeek;
 document.querySelector(".controls").appendChild(closeBtn);
 
@@ -195,6 +227,7 @@ document.getElementById("reset").onclick = function () {
 
   localStorage.clear();
   dashboard = {};
+  stockHistory = [];
   currentWeek = 1;
   localStorage.setItem("currentWeek", 1);
   render();
@@ -203,10 +236,17 @@ document.getElementById("reset").onclick = function () {
 // ---------------- EXPORT ----------------
 document.getElementById("export").onclick = function () {
 
-  const wb = XLSX.utils.table_to_book(
-    document.getElementById("stats-table"),
-    { sheet: "Stats" }
+  const wb = XLSX.utils.book_new();
+
+  const statsSheet = XLSX.utils.table_to_sheet(
+    document.getElementById("stats-table")
   );
+  XLSX.utils.book_append_sheet(wb, statsSheet, "Button Stats");
+
+  const stockSheet = XLSX.utils.table_to_sheet(
+    document.getElementById("stock-table")
+  );
+  XLSX.utils.book_append_sheet(wb, stockSheet, "Stock History");
 
   XLSX.writeFile(wb, "EagleShopStats.xlsx");
 };
@@ -218,7 +258,9 @@ render();
 </script>
 
 
+
 </body>
 </html>
+
 
 
