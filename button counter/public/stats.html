@@ -1,59 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Eagle Shop Stats</title>
+
+<!-- Load Roboto font -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+<!-- Load SheetJS library for Excel export -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+  body { font-family: Roboto, sans-serif; padding:20px; }
+  h1 { text-align:center; }
+
+  .controls { text-align:center; margin-bottom:15px; }
+  button { padding:8px 14px; margin:5px; cursor:pointer; font-weight:bold; }
+  .reset { background:#f44336; color:white; border:none; }
+
+  table { width:100%; border-collapse:collapse; }
+  th, td { border:1px solid #ccc; padding:6px; text-align:center; }
+  th { background:#eee; }
+  .current-week { background:#fff59d; font-weight:bold; }
+</style>
+</head>
+
+<body>
+
+<h1>Eagle Shop Stats</h1>
+
+<div class="controls">
+  <button id="prev">⬅ Previous</button>
+  <span id="week-label">Week 1</span>
+  <button id="next">Next ➡</button><br><br>
+
+  <!-- STOCK CONTROLS -->
+  <input type="number" id="initial-stock" placeholder="Enter Initial Stock">
+  <button id="set-stock">Set Stock</button>
+  <button id="calculate-stock">Close This Week</button><br>
+  <strong>Current Stock: <span id="current-stock">0</span></strong>
+  <br><br>
+
+  <button class="reset" id="reset">Reset ALL Data</button>
+  <button id="export">💾 Export to Excel</button>
+</div>
+
+
+<table id="stats-table">
+<thead>
+<tr>
+  <th>Group</th>
+  <th>Button</th>
+  <th>W1</th><th>W2</th><th>W3</th><th>W4</th><th>W5</th>
+  <th>W6</th><th>W7</th><th>W8</th><th>W9</th><th>W10</th>
+  <th>Total</th>
+  <th>Initial Stock</th>
+  <th>Remaining Stock</th>
+</tr>
+</thead>
+<tbody id="table"></tbody>
+</table>
+
+<h2>Weekly Stock History</h2>
+
+<table id="stock-table">
+  <thead>
+    <tr>
+      <th>Week</th>
+      <th>Button</th>
+      <th>Sold</th>
+      <th>Stock Before</th>
+      <th>Stock After</th>
+    </tr>
+  </thead>
+  <tbody id="stock-body"></tbody>
+</table>
+
+
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
 const WEEKS = 10;
 
-// PRE-DEFINED BUTTON LIST
-const BUTTONS = [
-  { name: "Ice Block", group: 10 },
-  { name: "Sit with friend", group: 10 },
-  { name: "Stationery Pack", group: 10 },
-  { name: "Tattoo", group: 10 },
-  { name: "Duty with a teacher", group: 30 },
-  { name: "Game with a friend", group: 30 },
-  { name: "Special chair in class", group: 30 },
-  { name: "Notepad", group: 50 },
-  { name: "Lolly bag", group: 50 },
-  { name: "15 mins computer time", group: 50 },
-  { name: "Morning tea with 3 friends", group: 50 },
-  { name: "Handball", group: 75 },
-  { name: "30 mins computer time", group: 75 },
-  { name: "20 mins computer time with friend", group: 75 },
-  { name: "Lanyard", group: 100 },
-  { name: "Free choice in class", group: 100 },
-  { name: "BYO morning tea with teacher", group: 150 },
-  { name: "Pick a prize", group: 150 },
-  { name: "Mentor in another class", group: 150 },
-  { name: "$2 tuckshop voucher", group: 250 },
-  { name: "Dodgeball for your whole class", group: 250 },
-  { name: "Free play for whole class", group: 250 },
-  { name: "Morning tea with DP", group: 300 },
-  { name: "Games Room (Nintendo Switch)", group: 300 },
-  { name: "400 badge", group: 400 },
-  { name: "$3 tuckshop voucher", group: 400 }
-];
-
 let dashboard = JSON.parse(localStorage.getItem("dashboard") || "{}");
-console.log("Dashboard loaded from localStorage:", dashboard); // Debugging line
-
-// Initialize dashboard if empty
-if (Object.keys(dashboard).length === 0) {
-  BUTTONS.forEach(btn => {
-    dashboard[btn.name] = {
-      group: btn.group,
-      weeks: new Array(WEEKS).fill(0),
-      initialStock: 0,
-      remainingStock: 0
-    };
-  });
-
-  localStorage.setItem("dashboard", JSON.stringify(dashboard));
-  console.log("Dashboard initialized and saved to localStorage:", dashboard); // Debugging line
-}
-
 let currentWeek = parseInt(localStorage.getItem("currentWeek")) || 1;
 let stockHistory = JSON.parse(localStorage.getItem("stockHistory") || "[]");
-let closedWeeks = JSON.parse(localStorage.getItem("closedWeeks") || "[]");
 
 // ---------------- RENDER MAIN TABLE ----------------
 function render() {
@@ -63,41 +95,40 @@ function render() {
 
   document.getElementById("week-label").textContent = `Week ${currentWeek}`;
 
-  // Debugging: Check if dashboard is being populated and processed correctly
-  console.log("Rendering dashboard:", dashboard);
+  Object.entries(dashboard).forEach(([name, data]) => {
 
-  // Sort the buttons by group number in ascending order
-  Object.entries(dashboard)
-    .sort((a, b) => a[1].group - b[1].group) // Sort by group
-    .forEach(([name, data]) => {
+    if (!data.weeks) data.weeks = new Array(WEEKS).fill(0);
+    if (data.initialStock === undefined) data.initialStock = 0;
+    if (data.remainingStock === undefined)
+      data.remainingStock = data.initialStock;
 
-      if (!data.weeks) data.weeks = new Array(WEEKS).fill(0);
-      if (data.initialStock === undefined) data.initialStock = 0;
-      if (data.remainingStock === undefined) data.remainingStock = data.initialStock;
+    const total = data.weeks.reduce((a,b)=>a+b,0);
 
-      const total = data.weeks.reduce((a,b)=>a+b,0);
+    const row = document.createElement("tr");
 
-      const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${data.group || ""}</td>
+      <td>${name}</td>
 
-      row.innerHTML = `
-        <td>${data.group || ""}</td>
-        <td>${name}</td>
-        ${data.weeks.map((v,i)=>
-          `<td class="${i===currentWeek-1?'current-week':''}">${v}</td>`
-        ).join("")}
-        <td>${total}</td>
-        <td>
-          <input type="number"
-                 min="0"
-                 value="${data.initialStock}"
-                 style="width:70px"
-                 onchange="setStock('${name}', this.value)">
-        </td>
-        <td>${data.remainingStock}</td>
-      `;
+      ${data.weeks.map((v,i)=>
+        `<td class="${i===currentWeek-1?'current-week':''}">${v}</td>`
+      ).join("")}
 
-      body.appendChild(row);
-    });
+      <td>${total}</td>
+
+      <td>
+        <input type="number"
+               min="0"
+               value="${data.initialStock}"
+               style="width:80px"
+               onchange="setStock('${name}', this.value)">
+      </td>
+
+      <td>${data.remainingStock}</td>
+    `;
+
+    body.appendChild(row);
+  });
 
   localStorage.setItem("dashboard", JSON.stringify(dashboard));
   renderStockHistory();
@@ -105,6 +136,7 @@ function render() {
 
 // ---------------- SET STOCK ----------------
 window.setStock = function(name, value) {
+
   const amount = parseInt(value);
   if (isNaN(amount) || amount < 0) return;
 
@@ -117,36 +149,29 @@ window.setStock = function(name, value) {
 
 // ---------------- CLOSE WEEK ----------------
 function closeWeek() {
-  if (closedWeeks.includes(currentWeek)) {
-    alert("This week has already been closed.");
-    return;
-  }
 
-  Object.entries(dashboard)
-    .sort((a, b) => a[1].group - b[1].group)
-    .forEach(([name, data]) => {
+  Object.entries(dashboard).forEach(([name, data]) => {
 
-      const sold = data.weeks[currentWeek - 1] || 0;
-      const before = data.remainingStock;
-      const after = Math.max(before - sold, 0);
+    const sold = data.weeks[currentWeek - 1] || 0;
 
-      data.remainingStock = after;
+    const before = data.remainingStock;
+    const after = before - sold;
 
-      stockHistory.push({
-        week: currentWeek,
-        button: name,
-        sold: sold,
-        before: before,
-        after: after
-      });
+    // Allow stock to go to 0
+    data.remainingStock = after < 0 ? 0 : after;
 
+    stockHistory.push({
+      week: currentWeek,
+      button: name,
+      sold: sold,
+      before: before,
+      after: data.remainingStock
     });
 
-  closedWeeks.push(currentWeek);
+  });
 
   localStorage.setItem("dashboard", JSON.stringify(dashboard));
   localStorage.setItem("stockHistory", JSON.stringify(stockHistory));
-  localStorage.setItem("closedWeeks", JSON.stringify(closedWeeks));
 
   render();
 }
@@ -157,9 +182,8 @@ function renderStockHistory() {
   const body = document.getElementById("stock-body");
   body.innerHTML = "";
 
-  const sorted = [...stockHistory].sort((a,b)=>b.week - a.week);
+  stockHistory.forEach(entry => {
 
-  sorted.forEach(entry => {
     const row = document.createElement("tr");
 
     row.innerHTML = `
@@ -180,6 +204,7 @@ document.getElementById("prev").onclick = function() {
     currentWeek--;
     localStorage.setItem("currentWeek", currentWeek);
     render();
+  }
 };
 
 document.getElementById("next").onclick = function() {
@@ -190,6 +215,12 @@ document.getElementById("next").onclick = function() {
   }
 };
 
+// ---------------- ADD CLOSE WEEK BUTTON ----------------
+const closeBtn = document.createElement("button");
+closeBtn.textContent = "Close This Week";
+closeBtn.onclick = closeWeek;
+document.querySelector(".controls").appendChild(closeBtn);
+
 // ---------------- RESET ----------------
 document.getElementById("reset").onclick = function () {
   if (!confirm("Delete ALL data?")) return;
@@ -197,7 +228,6 @@ document.getElementById("reset").onclick = function () {
   localStorage.clear();
   dashboard = {};
   stockHistory = [];
-  closedWeeks = [];
   currentWeek = 1;
   localStorage.setItem("currentWeek", 1);
   render();
@@ -226,3 +256,10 @@ render();
 
 });
 </script>
+
+
+
+</body>
+</html>
+
+
