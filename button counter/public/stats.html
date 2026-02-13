@@ -76,8 +76,52 @@
 document.addEventListener("DOMContentLoaded", function () {
 
 const WEEKS = 10;
+  const BUTTONS = [
+  { name: "Ice Block", group: 10 },
+  { name: "Sit with friend", group: 10 },
+  { name: "Stationery Pack", group: 10 },
+  { name: "Tattoo", group: 10 },
+  { name: "Duty with a teacher", group: 30 },
+  { name: "Game with a friend", group: 30 },
+  { name: "Special chair in class", group: 30 },
+  { name: "Notepad", group: 50 }
+  { name: "Lolly bag", group: 50 }
+  { name: "15 mins computer time", group: 50 }
+  { name: "Morning tea with 3 friends", group: 50 }
+  { name: "Handball", group: 75 }
+  { name: "30 mins computer time", group: 75 }
+  { name: "20 mins computer time with friend", group: 75 }
+  { name: "Lanyard", group: 100 }
+  { name: "Free choice in class", group: 100 }
+  { name: "BYO morning tea with teacher", group: 150 }
+  { name: "Pick a prize", group: 150 }
+  { name: "Mentor in another class", group: 150 }
+  { name: "$2 tuckshop voucher", group: 250 }
+  { name: "Dodgeball for your whole class", group: 250 }
+  { name: "Free play for whole class", group: 250 }
+  { name: "Morning tea with DP", group: 300 }
+  { name: "Games Room (Ninento Switch)", group: 300 }
+  { name: "400 badge", group: 400 }
+  { name: "$3 tuckshop voucher", group: 400 }
+  
+  
+];
 
 let dashboard = JSON.parse(localStorage.getItem("dashboard") || "{}");
+  // If dashboard empty, create all buttons
+if (Object.keys(dashboard).length === 0) {
+  BUTTONS.forEach(btn => {
+    dashboard[btn.name] = {
+      group: btn.group,
+      weeks: new Array(WEEKS).fill(0),
+      initialStock: 0,
+      remainingStock: 0
+    };
+  });
+
+  localStorage.setItem("dashboard", JSON.stringify(dashboard));
+}
+
 let currentWeek = parseInt(localStorage.getItem("currentWeek")) || 1;
 let stockHistory = JSON.parse(localStorage.getItem("stockHistory") || "[]");
 let closedWeeks = JSON.parse(localStorage.getItem("closedWeeks") || "[]");
@@ -269,6 +313,7 @@ render();
 
 </body>
 </html>
+
 
 
 
