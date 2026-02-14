@@ -86,72 +86,86 @@ document.addEventListener("DOMContentLoaded", function () {
 
 const WEEKS = 10;
 
-/* ---------------- LOAD DATA ---------------- */
+// ---------------- INITIAL BUTTONS ----------------
+const BUTTONS = [
+  {name:"Ice Block", group:10},
+  {name:"Sit with friend", group:10},
+  {name:"Stationery Pack", group:10},
+  {name:"Tattoo", group:10},
+  {name:"Duty with a teacher", group:30},
+  {name:"Game with a friend", group:30},
+  {name:"Special chair in class", group:30},
+  {name:"Notepad", group:50},
+  {name:"Lolly bag", group:50},
+  {name:"15 mins computer time", group:50},
+  {name:"Morning tea with 3 friends", group:50},
+  {name:"Handball", group:75},
+  {name:"30 mins computer time", group:75},
+  {name:"20 mins computer time with friend", group:75},
+  {name:"Lanyard", group:100},
+  {name:"Free choice in class", group:100},
+  {name:"BYO morning tea with teacher", group:150},
+  {name:"Pick a prize", group:150},
+  {name:"Mentor in another class", group:150},
+  {name:"$2 tuckshop voucher", group:250},
+  {name:"Dodgeball for your whole class", group:250},
+  {name:"Free play for whole class", group:250},
+  {name:"Morning tea with DP", group:300},
+  {name:"Games Room (Nintendo Switch)", group:300},
+  {name:"400 badge", group:400},
+  {name:"$3 tuckshop voucher", group:400},
+];
 
+// ---------------- LOAD LOCALSTORAGE ----------------
 let dashboard = JSON.parse(localStorage.getItem("dashboard")) || {};
 let currentWeek = parseInt(localStorage.getItem("currentWeek")) || 1;
 let closedWeeks = JSON.parse(localStorage.getItem("closedWeeks")) || [];
 let weeklyStock = JSON.parse(localStorage.getItem("weeklyStock")) || {};
 
-/* ---------------- ENSURE STRUCTURE ---------------- */
+// ---------------- ENSURE ALL BUTTONS EXIST ----------------
+BUTTONS.forEach(btn => {
+  if (!dashboard[btn.name]){
+    dashboard[btn.name] = {
+      group: btn.group,
+      weeks: new Array(WEEKS).fill(0),
+      initialStock: 0,
+      remainingStock: 0,
+      backorder: 0
+    };
+  }
 
-Object.keys(dashboard).forEach(name => {
-
-  const item = dashboard[name];
-
-  if (!item.weeks) item.weeks = new Array(WEEKS).fill(0);
-  if (item.initialStock === undefined) item.initialStock = 0;
-  if (item.remainingStock === undefined) item.remainingStock = item.initialStock;
-  if (item.backorder === undefined) item.backorder = 0;
-
-  if (!weeklyStock[name])
-    weeklyStock[name] = new Array(WEEKS).fill(null);
-
+  if (!weeklyStock[btn.name]){
+    weeklyStock[btn.name] = new Array(WEEKS).fill(null);
+  }
 });
 
-/* ---------------- RENDER MAIN TABLE ---------------- */
-
+// ---------------- RENDER MAIN TABLE ----------------
 function render() {
-
   const body = document.getElementById("table");
   body.innerHTML = "";
-
   document.getElementById("week-label").textContent = `Week ${currentWeek}`;
 
-  const sorted = Object.entries(dashboard)
-    .sort((a,b)=>(a[1].group||0)-(b[1].group||0));
+  const sorted = Object.entries(dashboard).sort((a,b)=>(a[1].group||0)-(b[1].group||0));
 
   sorted.forEach(([name,data])=>{
-
     const total = data.weeks.reduce((a,b)=>a+b,0);
 
-    const canEditStock =
-      closedWeeks.length === 0 || data.remainingStock === 0;
+    // Determine if stock input should be editable
+    const canEditStock = !closedWeeks.includes(currentWeek) || data.remainingStock===0;
 
     const row = document.createElement("tr");
-
     row.innerHTML = `
       <td>${data.group || ""}</td>
       <td>${name}</td>
-
       ${data.weeks.map((v,i)=>
         `<td class="${i===currentWeek-1?'current-week':''}">${v}</td>`
       ).join("")}
-
       <td>${total}</td>
-
       <td>
-        <input type="number"
-               min="0"
-               value="${data.initialStock}"
-               style="width:80px"
-               ${canEditStock ? "" : "disabled"}
-               onchange="setStock('${name}', this.value)">
+        ${canEditStock ? `<input type="number" min="0" value="${data.initialStock}" style="width:80px" onchange="setStock('${name}', this.value)">` : ""}
       </td>
-
       <td>${data.remainingStock}</td>
     `;
-
     body.appendChild(row);
   });
 
@@ -159,19 +173,15 @@ function render() {
   renderStockTable();
 }
 
-/* ---------------- SET STOCK ---------------- */
-
+// ---------------- SET STOCK ----------------
 window.setStock = function(name,value){
-
   const amount = parseInt(value);
   if (isNaN(amount) || amount < 0) return;
 
   const item = dashboard[name];
 
-  item.initialStock = amount;
-
+  // Handle backorder if stock was negative
   if (item.backorder > 0){
-
     if (amount >= item.backorder){
       item.remainingStock = amount - item.backorder;
       item.backorder = 0;
@@ -179,110 +189,65 @@ window.setStock = function(name,value){
       item.backorder -= amount;
       item.remainingStock = 0;
     }
-
   } else {
-
     item.remainingStock = amount;
-
   }
 
+  item.initialStock = amount;
   localStorage.setItem("dashboard", JSON.stringify(dashboard));
   render();
 };
 
-/* ---------------- CLOSE WEEK ---------------- */
-
+// ---------------- CLOSE WEEK ----------------
 function closeWeek(){
-
   if (closedWeeks.includes(currentWeek)){
-    alert("This week is already closed.");
+    alert("This week has already been closed.");
     return;
   }
 
   Object.entries(dashboard).forEach(([name,data])=>{
-
     const sold = data.weeks[currentWeek-1] || 0;
 
     if (sold > data.remainingStock){
-
       const shortage = sold - data.remainingStock;
       data.backorder += shortage;
       data.remainingStock = 0;
-
     } else {
-
       data.remainingStock -= sold;
-
     }
 
     weeklyStock[name][currentWeek-1] = data.remainingStock;
-
   });
 
   closedWeeks.push(currentWeek);
 
-  localStorage.setItem("dashboard", JSON.stringify(dashboard));
   localStorage.setItem("closedWeeks", JSON.stringify(closedWeeks));
+  localStorage.setItem("dashboard", JSON.stringify(dashboard));
   localStorage.setItem("weeklyStock", JSON.stringify(weeklyStock));
 
   render();
 }
 
-/* ---------------- RENDER STOCK TABLE ---------------- */
-
+// ---------------- RENDER STOCK TABLE ----------------
 function renderStockTable(){
-
   const body = document.getElementById("stock-body");
   body.innerHTML = "";
 
-  const sorted = Object.entries(dashboard)
-    .sort((a,b)=>(a[1].group||0)-(b[1].group||0));
+  const sorted = Object.entries(dashboard).sort((a,b)=>(a[1].group||0)-(b[1].group||0));
 
   sorted.forEach(([name,data])=>{
-
     const row = document.createElement("tr");
 
-    let previous = null;
-
-    const cells = weeklyStock[name].map((value,index)=>{
-
-      if (!closedWeeks.includes(index+1))
-        return `<td>-</td>`;
-
-      const stockValue = value ?? data.initialStock;
-
-      let className = "";
-
-      if (previous !== null){
-
-        if (stockValue < previous)
-          className = "stock-decreased";
-
-        if (stockValue > previous)
-          className = "stock-increased";
-      }
-
-      if (stockValue === 0)
-        className = "stock-zero";
-
-      previous = stockValue;
-
-      return `<td class="${className}">${stockValue}</td>`;
-
+    const cells = weeklyStock[name].map((v,i)=>{
+      return `<td>${v !== null ? v : '-'}</td>`;
     }).join("");
 
-    row.innerHTML = `
-      <td>${name}</td>
-      ${cells}
-    `;
-
+    row.innerHTML = `<td>${name}</td>${cells}`;
     body.appendChild(row);
   });
-
 }
 
-/* ---------------- WEEK NAVIGATION ---------------- */
-
+// ---------------- NAVIGATION ----------------
 document.getElementById("prev").onclick=function(){
   if(currentWeek>1){
     currentWeek--;
@@ -299,34 +264,27 @@ document.getElementById("next").onclick=function(){
   }
 };
 
-/* ---------------- ADD CLOSE BUTTON ---------------- */
-
+// ---------------- ADD CLOSE WEEK BUTTON ----------------
 const closeBtn=document.createElement("button");
 closeBtn.textContent="Close This Week";
 closeBtn.onclick=closeWeek;
 document.querySelector(".controls").appendChild(closeBtn);
 
-/* ---------------- RESET ---------------- */
-
+// ---------------- RESET ----------------
 document.getElementById("reset").onclick=function(){
-
   if(!confirm("Delete ALL data?")) return;
-
   localStorage.clear();
   location.reload();
-
 };
 
-/* ---------------- INITIAL RENDER ---------------- */
-
+// ---------------- INITIAL RENDER ----------------
 render();
-
-});
 </script>
 
 
 </body>
 </html>
+
 
 
 
