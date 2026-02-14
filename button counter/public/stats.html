@@ -85,4 +85,175 @@ function render() {
 
   // Sort the buttons by group value in ascending order
   const sortedDashboard = Object.entries(dashboard)
-    .sort((a, b) => a[1].group - b[1].group); // Sorting by the 'group' value
+    .sort((a, b) => a[1].group - b[1].group); // Sorting by the 'group' value in ascending order
+
+  sortedDashboard.forEach(([name, data]) => {
+
+    if (!data.weeks) data.weeks = new Array(WEEKS).fill(0);
+    if (data.initialStock === undefined) data.initialStock = 0;
+    if (data.remainingStock === undefined)
+      data.remainingStock = data.initialStock;
+
+    // Calculate the total of all weeks combined
+    const total = data.weeks.reduce((a,b) => a + b, 0);
+
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>${data.group || ""}</td>
+      <td>${name}</td>
+
+      ${data.weeks.map((v, i) =>
+        `<td class="${i === currentWeek - 1 ? 'current-week' : ''}">${v}</td>`
+      ).join("")}
+
+      <td>${total}</td>
+
+      <td>
+        <input type="number"
+               min="0"
+               value="${data.initialStock}"
+               style="width:80px"
+               onchange="setStock('${name}', this.value)">
+      </td>
+
+      <td>${data.remainingStock}</td>
+    `;
+
+    body.appendChild(row);
+  });
+
+  localStorage.setItem("dashboard", JSON.stringify(dashboard));
+  renderStockHistory();
+}
+
+// ---------------- SET STOCK ----------------
+window.setStock = function(name, value) {
+  const amount = parseInt(value);
+  if (isNaN(amount) || amount < 0) return;
+
+  dashboard[name].initialStock = amount;
+  dashboard[name].remainingStock = amount;
+
+  localStorage.setItem("dashboard", JSON.stringify(dashboard));
+  render();
+};
+
+// ---------------- CLOSE WEEK ----------------
+function closeWeek() {
+
+  // Check if the week has already been closed
+  if (closedWeeks.includes(currentWeek)) {
+    alert("This week has already been closed.");
+    return;
+  }
+
+  Object.entries(dashboard).forEach(([name, data]) => {
+
+    const sold = data.weeks[currentWeek - 1] || 0;
+    const before = data.remainingStock;
+    const after = before - sold;
+
+    // Update the remaining stock for the button
+    data.remainingStock = after < 0 ? 0 : after;
+
+    // Store the weekly stock after the week has been closed
+    stockHistory.push({
+      week: currentWeek,
+      button: name,
+      remainingStock: data.remainingStock
+    });
+
+  });
+
+  closedWeeks.push(currentWeek);
+  localStorage.setItem("closedWeeks", JSON.stringify(closedWeeks));
+  localStorage.setItem("dashboard", JSON.stringify(dashboard));
+  localStorage.setItem("stockHistory", JSON.stringify(stockHistory));
+
+  render();
+}
+
+// ---------------- RENDER STOCK HISTORY ----------------
+function renderStockHistory() {
+
+  const body = document.getElementById("stock-body");
+  body.innerHTML = "";
+
+  // Display remaining stock per item per week
+  stockHistory.forEach(entry => {
+
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>${entry.button}</td>
+      <td>Week ${entry.week}</td>
+      <td>${entry.remainingStock}</td>
+    `;
+
+    body.appendChild(row);
+  });
+}
+
+// ---------------- WEEK NAVIGATION ----------------
+document.getElementById("prev").onclick = function() {
+  if (currentWeek > 1) {
+    currentWeek--;
+    localStorage.setItem("currentWeek", currentWeek);
+    render();
+  }
+};
+
+document.getElementById("next").onclick = function() {
+  if (currentWeek < WEEKS) {
+    currentWeek++;
+    localStorage.setItem("currentWeek", currentWeek);
+    render();
+  }
+};
+
+// ---------------- ADD CLOSE WEEK BUTTON ----------------
+const closeBtn = document.createElement("button");
+closeBtn.textContent = "Close This Week";
+closeBtn.onclick = closeWeek;
+document.querySelector(".controls").appendChild(closeBtn);
+
+// ---------------- RESET ----------------
+document.getElementById("reset").onclick = function () {
+  if (!confirm("Delete ALL data?")) return;
+
+  localStorage.clear();
+  dashboard = {};
+  stockHistory = [];
+  closedWeeks = [];
+  currentWeek = 1;
+  localStorage.setItem("currentWeek", 1);
+  render();
+};
+
+// ---------------- EXPORT ----------------
+document.getElementById("export").onclick = function () {
+
+  const wb = XLSX.utils.book_new();
+
+  const statsSheet = XLSX.utils.table_to_sheet(
+    document.getElementById("stats-table")
+  );
+  XLSX.utils.book_append_sheet(wb, statsSheet, "Button Stats");
+
+  const stockSheet = XLSX.utils.table_to_sheet(
+    document.getElementById("stock-table")
+  );
+  XLSX.utils.book_append_sheet(wb, stockSheet, "Stock History");
+
+  XLSX.writeFile(wb, "EagleShopStats.xlsx");
+};
+
+// ---------------- INITIAL RENDER ----------------
+render();
+
+});
+</script>
+
+</body>
+</html>
