@@ -151,29 +151,30 @@ function renderStockTable() {
 
   sorted.forEach(([name,data])=>{
 
-    let lastStock = data.initialStock;
-
-    const values = weeklyStock[name].map(value => {
-
-      if (value !== null) {
-        lastStock = value;
-        return value;
-      }
-
-      return lastStock;
-    });
+    if (!weeklyStock[name])
+      weeklyStock[name] = new Array(WEEKS).fill(null);
 
     const row = document.createElement("tr");
 
+    const cells = weeklyStock[name].map((value, index) => {
+
+      // Only show stock if that week has been closed
+      if (closedWeeks.includes(index + 1)) {
+        return `<td>${value !== null ? value : data.initialStock}</td>`;
+      }
+
+      // Week not closed yet
+      return `<td>-</td>`;
+    }).join("");
+
     row.innerHTML = `
       <td>${name}</td>
-      ${values.map(v=>`<td>${v}</td>`).join("")}
+      ${cells}
     `;
 
     body.appendChild(row);
   });
 }
-
 
 // ---------------- SET STOCK ----------------
 window.setStock = function(name,value){
@@ -261,6 +262,7 @@ renderStockTable();
 
 </body>
 </html>
+
 
 
 
