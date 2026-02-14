@@ -145,19 +145,24 @@ function closeWeek() {
     return;
   }
 
-  Object.entries(dashboard).forEach(([name,data])=>{
+Object.entries(dashboard).forEach(([name,data])=>{
 
-    const sold = data.weeks[currentWeek-1] || 0;
-    const newStock = Math.max(0, data.remainingStock - sold);
+  const sold = data.weeks[currentWeek-1] || 0;
+  const newStock = Math.max(0, data.remainingStock - sold);
 
-    data.remainingStock = newStock;
+  data.remainingStock = newStock;
 
-    if (!weeklyStock[name])
-      weeklyStock[name] = new Array(WEEKS).fill("");
+  if (!weeklyStock[name])
+    weeklyStock[name] = new Array(WEEKS).fill("");
+
+  // Only save if not already saved
+  if (weeklyStock[name][currentWeek-1] === "" ||
+      weeklyStock[name][currentWeek-1] === undefined) {
 
     weeklyStock[name][currentWeek-1] = newStock;
+  }
 
-  });
+});
 
   closedWeeks.push(currentWeek);
 
@@ -177,16 +182,32 @@ function renderStockTable() {
   const sorted = Object.entries(dashboard)
     .sort((a, b) => (a[1].group || 0) - (b[1].group || 0));
 
-  sorted.forEach(([name,data])=>{
+  sorted.forEach(([name, data]) => {
 
-    if (!weeklyStock[name])
+    if (!weeklyStock[name]) {
       weeklyStock[name] = new Array(WEEKS).fill("");
+    }
+
+    let lastKnownStock = data.initialStock || 0;
+
+    const rowData = weeklyStock[name].map((value, index) => {
+
+      // If this week has a saved value, use it
+      if (value !== "" && value !== null && value !== undefined) {
+        lastKnownStock = value;
+        return value;
+      }
+
+      // If no saved value but a previous week exists, carry it forward
+      return lastKnownStock;
+
+    });
 
     const row = document.createElement("tr");
 
     row.innerHTML = `
       <td>${name}</td>
-      ${weeklyStock[name].map(v=>`<td>${v}</td>`).join("")}
+      ${rowData.map(v => `<td>${v}</td>`).join("")}
     `;
 
     body.appendChild(row);
@@ -194,6 +215,7 @@ function renderStockTable() {
   });
 
 }
+
 
 // ---------------- WEEK NAVIGATION ----------------
 document.getElementById("prev").onclick = function(){
@@ -253,3 +275,4 @@ render();
 
 </body>
 </html>
+
