@@ -86,38 +86,37 @@ document.addEventListener("DOMContentLoaded", function () {
 
 const WEEKS = 10;
 
-// Load storage safely
+/* ---------------- LOAD DATA ---------------- */
+
 let dashboard = JSON.parse(localStorage.getItem("dashboard")) || {};
-let weeklyStock = JSON.parse(localStorage.getItem("weeklyStock")) || {};
-let closedWeeks = JSON.parse(localStorage.getItem("closedWeeks")) || [];
 let currentWeek = parseInt(localStorage.getItem("currentWeek")) || 1;
+let closedWeeks = JSON.parse(localStorage.getItem("closedWeeks")) || [];
+let weeklyStock = JSON.parse(localStorage.getItem("weeklyStock")) || {};
 
+/* ---------------- ENSURE STRUCTURE ---------------- */
 
-// ---------------- ENSURE STRUCTURE ----------------
 Object.keys(dashboard).forEach(name => {
 
-  if (!dashboard[name].weeks)
-    dashboard[name].weeks = new Array(WEEKS).fill(0);
+  const item = dashboard[name];
 
-  if (dashboard[name].initialStock === undefined)
-    dashboard[name].initialStock = 0;
-
-  if (dashboard[name].remainingStock === undefined)
-    dashboard[name].remainingStock = dashboard[name].initialStock;
+  if (!item.weeks) item.weeks = new Array(WEEKS).fill(0);
+  if (item.initialStock === undefined) item.initialStock = 0;
+  if (item.remainingStock === undefined) item.remainingStock = item.initialStock;
+  if (item.backorder === undefined) item.backorder = 0;
 
   if (!weeklyStock[name])
     weeklyStock[name] = new Array(WEEKS).fill(null);
+
 });
 
+/* ---------------- RENDER MAIN TABLE ---------------- */
 
-// ---------------- MAIN TABLE ----------------
-function renderMainTable() {
+function render() {
 
   const body = document.getElementById("table");
   body.innerHTML = "";
 
-  document.getElementById("week-label").textContent =
-    "Week " + currentWeek;
+  document.getElementById("week-label").textContent = `Week ${currentWeek}`;
 
   const sorted = Object.entries(dashboard)
     .sort((a,b)=>(a[1].group||0)-(b[1].group||0));
@@ -125,6 +124,9 @@ function renderMainTable() {
   sorted.forEach(([name,data])=>{
 
     const total = data.weeks.reduce((a,b)=>a+b,0);
+
+    const canEditStock =
+      closedWeeks.length === 0 || data.remainingStock === 0;
 
     const row = document.createElement("tr");
 
@@ -140,10 +142,11 @@ function renderMainTable() {
 
       <td>
         <input type="number"
-          min="0"
-          value="${data.initialStock}"
-          style="width:70px"
-          onchange="setStock('${name}', this.value)">
+               min="0"
+               value="${data.initialStock}"
+               style="width:80px"
+               ${canEditStock ? "" : "disabled"}
+               onchange="setStock('${name}', this.value)">
       </td>
 
       <td>${data.remainingStock}</td>
@@ -153,11 +156,81 @@ function renderMainTable() {
   });
 
   localStorage.setItem("dashboard", JSON.stringify(dashboard));
+  renderStockTable();
 }
 
+/* ---------------- SET STOCK ---------------- */
 
-// ---------------- STOCK TABLE ----------------
-function renderStockTable() {
+window.setStock = function(name,value){
+
+  const amount = parseInt(value);
+  if (isNaN(amount) || amount < 0) return;
+
+  const item = dashboard[name];
+
+  item.initialStock = amount;
+
+  if (item.backorder > 0){
+
+    if (amount >= item.backorder){
+      item.remainingStock = amount - item.backorder;
+      item.backorder = 0;
+    } else {
+      item.backorder -= amount;
+      item.remainingStock = 0;
+    }
+
+  } else {
+
+    item.remainingStock = amount;
+
+  }
+
+  localStorage.setItem("dashboard", JSON.stringify(dashboard));
+  render();
+};
+
+/* ---------------- CLOSE WEEK ---------------- */
+
+function closeWeek(){
+
+  if (closedWeeks.includes(currentWeek)){
+    alert("This week is already closed.");
+    return;
+  }
+
+  Object.entries(dashboard).forEach(([name,data])=>{
+
+    const sold = data.weeks[currentWeek-1] || 0;
+
+    if (sold > data.remainingStock){
+
+      const shortage = sold - data.remainingStock;
+      data.backorder += shortage;
+      data.remainingStock = 0;
+
+    } else {
+
+      data.remainingStock -= sold;
+
+    }
+
+    weeklyStock[name][currentWeek-1] = data.remainingStock;
+
+  });
+
+  closedWeeks.push(currentWeek);
+
+  localStorage.setItem("dashboard", JSON.stringify(dashboard));
+  localStorage.setItem("closedWeeks", JSON.stringify(closedWeeks));
+  localStorage.setItem("weeklyStock", JSON.stringify(weeklyStock));
+
+  render();
+}
+
+/* ---------------- RENDER STOCK TABLE ---------------- */
+
+function renderStockTable(){
 
   const body = document.getElementById("stock-body");
   body.innerHTML = "";
@@ -167,43 +240,35 @@ function renderStockTable() {
 
   sorted.forEach(([name,data])=>{
 
-    if (!weeklyStock[name])
-      weeklyStock[name] = new Array(WEEKS).fill(null);
-
-    let previousValue = null;
-
     const row = document.createElement("tr");
 
-    const cells = weeklyStock[name].map((value, index) => {
+    let previous = null;
 
-      // If week not closed yet
-      if (!closedWeeks.includes(index + 1)) {
+    const cells = weeklyStock[name].map((value,index)=>{
+
+      if (!closedWeeks.includes(index+1))
         return `<td>-</td>`;
-      }
 
-      let stockValue = value !== null ? value : data.initialStock;
+      const stockValue = value ?? data.initialStock;
+
       let className = "";
 
-      // Compare with previous week
-      if (previousValue !== null) {
+      if (previous !== null){
 
-        if (stockValue < previousValue) {
+        if (stockValue < previous)
           className = "stock-decreased";
-        }
 
-        if (stockValue > previousValue) {
+        if (stockValue > previous)
           className = "stock-increased";
-        }
-
       }
 
-      if (stockValue === 0) {
+      if (stockValue === 0)
         className = "stock-zero";
-      }
 
-      previousValue = stockValue;
+      previous = stockValue;
 
       return `<td class="${className}">${stockValue}</td>`;
+
     }).join("");
 
     row.innerHTML = `
@@ -213,88 +278,48 @@ function renderStockTable() {
 
     body.appendChild(row);
   });
+
 }
 
+/* ---------------- WEEK NAVIGATION ---------------- */
 
-// ---------------- SET STOCK ----------------
-window.setStock = function(name,value){
-
-  const amount = parseInt(value);
-  if(isNaN(amount) || amount < 0) return;
-
-  dashboard[name].initialStock = amount;
-  dashboard[name].remainingStock = amount;
-
-  localStorage.setItem("dashboard", JSON.stringify(dashboard));
-
-  renderMainTable();
-  renderStockTable();
-};
-
-
-// ---------------- CLOSE WEEK ----------------
-function closeWeek(){
-
-  if(closedWeeks.includes(currentWeek)){
-    alert("Week already closed.");
-    return;
-  }
-
-  Object.entries(dashboard).forEach(([name,data])=>{
-
-    const sold = data.weeks[currentWeek-1] || 0;
-    const newStock = Math.max(0, data.remainingStock - sold);
-
-    data.remainingStock = newStock;
-
-    weeklyStock[name][currentWeek-1] = newStock;
-
-  });
-
-  closedWeeks.push(currentWeek);
-
-  localStorage.setItem("dashboard", JSON.stringify(dashboard));
-  localStorage.setItem("weeklyStock", JSON.stringify(weeklyStock));
-  localStorage.setItem("closedWeeks", JSON.stringify(closedWeeks));
-
-  renderMainTable();
-  renderStockTable();
-}
-
-
-// ---------------- WEEK NAV ----------------
-document.getElementById("prev").onclick = function(){
+document.getElementById("prev").onclick=function(){
   if(currentWeek>1){
     currentWeek--;
     localStorage.setItem("currentWeek",currentWeek);
-    renderMainTable();
+    render();
   }
 };
 
-document.getElementById("next").onclick = function(){
+document.getElementById("next").onclick=function(){
   if(currentWeek<WEEKS){
     currentWeek++;
     localStorage.setItem("currentWeek",currentWeek);
-    renderMainTable();
+    render();
   }
 };
 
-document.getElementById("closeWeek").onclick = closeWeek;
+/* ---------------- ADD CLOSE BUTTON ---------------- */
 
+const closeBtn=document.createElement("button");
+closeBtn.textContent="Close This Week";
+closeBtn.onclick=closeWeek;
+document.querySelector(".controls").appendChild(closeBtn);
 
-// ---------------- RESET ----------------
-document.getElementById("reset").onclick = function(){
+/* ---------------- RESET ---------------- */
+
+document.getElementById("reset").onclick=function(){
 
   if(!confirm("Delete ALL data?")) return;
 
   localStorage.clear();
   location.reload();
+
 };
 
+/* ---------------- INITIAL RENDER ---------------- */
 
-// ---------------- INITIAL RENDER ----------------
-renderMainTable();
-renderStockTable();
+render();
 
 });
 </script>
@@ -302,6 +327,7 @@ renderStockTable();
 
 </body>
 </html>
+
 
 
 
