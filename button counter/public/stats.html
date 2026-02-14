@@ -4,24 +4,21 @@
 <meta charset="UTF-8">
 <title>Eagle Shop Stats</title>
 
-<!-- Load Roboto font -->
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-
-<!-- Load SheetJS library for Excel export -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <style>
-  body { font-family: Roboto, sans-serif; padding:20px; }
-  h1 { text-align:center; }
+body { font-family: Roboto, sans-serif; padding:20px; }
+h1 { text-align:center; }
 
-  .controls { text-align:center; margin-bottom:15px; }
-  button { padding:8px 14px; margin:5px; cursor:pointer; font-weight:bold; }
-  .reset { background:#f44336; color:white; border:none; }
+.controls { text-align:center; margin-bottom:15px; }
+button { padding:8px 14px; margin:5px; cursor:pointer; font-weight:bold; }
+.reset { background:#f44336; color:white; border:none; }
 
-  table { width:100%; border-collapse:collapse; }
-  th, td { border:1px solid #ccc; padding:6px; text-align:center; }
-  th { background:#eee; }
-  .current-week { background:#fff59d; font-weight:bold; }
+table { width:100%; border-collapse:collapse; margin-bottom:30px; }
+th, td { border:1px solid #ccc; padding:6px; text-align:center; }
+th { background:#eee; }
+.current-week { background:#fff59d; font-weight:bold; }
 </style>
 </head>
 
@@ -33,10 +30,12 @@
   <button id="prev">⬅ Previous</button>
   <span id="week-label">Week 1</span>
   <button id="next">Next ➡</button><br><br>
+  <button id="closeWeek">Close This Week</button>
   <button class="reset" id="reset">Reset ALL Data</button>
   <button id="export">💾 Export to Excel</button>
 </div>
 
+<!-- MAIN SALES TABLE -->
 <table id="stats-table">
 <thead>
 <tr>
@@ -46,23 +45,24 @@
   <th>W6</th><th>W7</th><th>W8</th><th>W9</th><th>W10</th>
   <th>Total</th>
   <th>Initial Stock</th>
-  <th>Remaining Stock</th>
+  <th>Current Stock</th>
 </tr>
 </thead>
 <tbody id="table"></tbody>
 </table>
 
-<h2>Weekly Stock History</h2>
+<!-- HORIZONTAL WEEKLY STOCK TABLE -->
+<h2>Weekly Remaining Stock</h2>
 
 <table id="stock-table">
-  <thead>
-    <tr>
-      <th>Button</th>
-      <th>Week</th>
-      <th>Remaining Stock</th>
-    </tr>
-  </thead>
-  <tbody id="stock-body"></tbody>
+<thead>
+<tr>
+  <th>Button</th>
+  <th>W1</th><th>W2</th><th>W3</th><th>W4</th><th>W5</th>
+  <th>W6</th><th>W7</th><th>W8</th><th>W9</th><th>W10</th>
+</tr>
+</thead>
+<tbody id="stock-body"></tbody>
 </table>
 
 <script>
@@ -72,10 +72,10 @@ const WEEKS = 10;
 
 let dashboard = JSON.parse(localStorage.getItem("dashboard") || "{}");
 let currentWeek = parseInt(localStorage.getItem("currentWeek")) || 1;
-let stockHistory = JSON.parse(localStorage.getItem("stockHistory") || "[]");
 let closedWeeks = JSON.parse(localStorage.getItem("closedWeeks") || "[]");
+let weeklyStock = JSON.parse(localStorage.getItem("weeklyStock") || "{}");
 
-// ---------------- RENDER MAIN TABLE ----------------
+// ---------------- RENDER ----------------
 function render() {
 
   const body = document.getElementById("table");
@@ -83,19 +83,16 @@ function render() {
 
   document.getElementById("week-label").textContent = `Week ${currentWeek}`;
 
-  // Sort the buttons by group value in ascending order
-  const sortedDashboard = Object.entries(dashboard)
-    .sort((a, b) => a[1].group - b[1].group); // Sorting by the 'group' value in ascending order
+  const sorted = Object.entries(dashboard)
+    .sort((a, b) => (a[1].group || 0) - (b[1].group || 0));
 
-  sortedDashboard.forEach(([name, data]) => {
+  sorted.forEach(([name, data]) => {
 
     if (!data.weeks) data.weeks = new Array(WEEKS).fill(0);
     if (data.initialStock === undefined) data.initialStock = 0;
-    if (data.remainingStock === undefined)
-      data.remainingStock = data.initialStock;
+    if (data.remainingStock === undefined) data.remainingStock = data.initialStock;
 
-    // Calculate the total of all weeks combined
-    const total = data.weeks.reduce((a,b) => a + b, 0);
+    const total = data.weeks.reduce((a,b)=>a+b,0);
 
     const row = document.createElement("tr");
 
@@ -103,28 +100,29 @@ function render() {
       <td>${data.group || ""}</td>
       <td>${name}</td>
 
-      ${data.weeks.map((v, i) =>
-        `<td class="${i === currentWeek - 1 ? 'current-week' : ''}">${v}</td>`
+      ${data.weeks.map((v,i)=>
+        `<td class="${i===currentWeek-1?'current-week':''}">${v}</td>`
       ).join("")}
 
       <td>${total}</td>
 
       <td>
         <input type="number"
-               min="0"
-               value="${data.initialStock}"
-               style="width:80px"
-               onchange="setStock('${name}', this.value)">
+          min="0"
+          value="${data.initialStock}"
+          style="width:70px"
+          onchange="setStock('${name}', this.value)">
       </td>
 
       <td>${data.remainingStock}</td>
     `;
 
     body.appendChild(row);
+
   });
 
   localStorage.setItem("dashboard", JSON.stringify(dashboard));
-  renderStockHistory();
+  renderStockTable();
 }
 
 // ---------------- SET STOCK ----------------
@@ -142,97 +140,96 @@ window.setStock = function(name, value) {
 // ---------------- CLOSE WEEK ----------------
 function closeWeek() {
 
-  // Check if the week has already been closed
   if (closedWeeks.includes(currentWeek)) {
-    alert("This week has already been closed.");
+    alert("Week already closed.");
     return;
   }
 
-  Object.entries(dashboard).forEach(([name, data]) => {
+  Object.entries(dashboard).forEach(([name,data])=>{
 
-    const sold = data.weeks[currentWeek - 1] || 0;
-    const before = data.remainingStock;
-    const after = before - sold;
+    const sold = data.weeks[currentWeek-1] || 0;
+    const newStock = Math.max(0, data.remainingStock - sold);
 
-    // Update the remaining stock for the button
-    data.remainingStock = after < 0 ? 0 : after;
+    data.remainingStock = newStock;
 
-    // Store the weekly stock after the week has been closed
-    stockHistory.push({
-      week: currentWeek,
-      button: name,
-      remainingStock: data.remainingStock
-    });
+    if (!weeklyStock[name])
+      weeklyStock[name] = new Array(WEEKS).fill("");
+
+    weeklyStock[name][currentWeek-1] = newStock;
 
   });
 
   closedWeeks.push(currentWeek);
-  localStorage.setItem("closedWeeks", JSON.stringify(closedWeeks));
+
   localStorage.setItem("dashboard", JSON.stringify(dashboard));
-  localStorage.setItem("stockHistory", JSON.stringify(stockHistory));
+  localStorage.setItem("weeklyStock", JSON.stringify(weeklyStock));
+  localStorage.setItem("closedWeeks", JSON.stringify(closedWeeks));
 
   render();
 }
 
-// ---------------- RENDER STOCK HISTORY ----------------
-function renderStockHistory() {
+// ---------------- RENDER HORIZONTAL STOCK TABLE ----------------
+function renderStockTable() {
 
   const body = document.getElementById("stock-body");
   body.innerHTML = "";
 
-  // Display remaining stock per item per week
-  stockHistory.forEach(entry => {
+  const sorted = Object.entries(dashboard)
+    .sort((a, b) => (a[1].group || 0) - (b[1].group || 0));
+
+  sorted.forEach(([name,data])=>{
+
+    if (!weeklyStock[name])
+      weeklyStock[name] = new Array(WEEKS).fill("");
 
     const row = document.createElement("tr");
 
     row.innerHTML = `
-      <td>${entry.button}</td>
-      <td>Week ${entry.week}</td>
-      <td>${entry.remainingStock}</td>
+      <td>${name}</td>
+      ${weeklyStock[name].map(v=>`<td>${v}</td>`).join("")}
     `;
 
     body.appendChild(row);
+
   });
+
 }
 
 // ---------------- WEEK NAVIGATION ----------------
-document.getElementById("prev").onclick = function() {
-  if (currentWeek > 1) {
+document.getElementById("prev").onclick = function(){
+  if(currentWeek>1){
     currentWeek--;
-    localStorage.setItem("currentWeek", currentWeek);
+    localStorage.setItem("currentWeek",currentWeek);
     render();
   }
 };
 
-document.getElementById("next").onclick = function() {
-  if (currentWeek < WEEKS) {
+document.getElementById("next").onclick = function(){
+  if(currentWeek<WEEKS){
     currentWeek++;
-    localStorage.setItem("currentWeek", currentWeek);
+    localStorage.setItem("currentWeek",currentWeek);
     render();
   }
 };
 
-// ---------------- ADD CLOSE WEEK BUTTON ----------------
-const closeBtn = document.createElement("button");
-closeBtn.textContent = "Close This Week";
-closeBtn.onclick = closeWeek;
-document.querySelector(".controls").appendChild(closeBtn);
+document.getElementById("closeWeek").onclick = closeWeek;
 
 // ---------------- RESET ----------------
-document.getElementById("reset").onclick = function () {
-  if (!confirm("Delete ALL data?")) return;
+document.getElementById("reset").onclick = function(){
+
+  if(!confirm("Delete ALL data?")) return;
 
   localStorage.clear();
   dashboard = {};
-  stockHistory = [];
+  weeklyStock = {};
   closedWeeks = [];
   currentWeek = 1;
-  localStorage.setItem("currentWeek", 1);
+
   render();
 };
 
 // ---------------- EXPORT ----------------
-document.getElementById("export").onclick = function () {
+document.getElementById("export").onclick = function(){
 
   const wb = XLSX.utils.book_new();
 
@@ -244,12 +241,11 @@ document.getElementById("export").onclick = function () {
   const stockSheet = XLSX.utils.table_to_sheet(
     document.getElementById("stock-table")
   );
-  XLSX.utils.book_append_sheet(wb, stockSheet, "Stock History");
+  XLSX.utils.book_append_sheet(wb, stockSheet, "Weekly Stock");
 
-  XLSX.writeFile(wb, "EagleShopStats.xlsx");
+  XLSX.writeFile(wb,"EagleShopStats.xlsx");
 };
 
-// ---------------- INITIAL RENDER ----------------
 render();
 
 });
