@@ -19,6 +19,22 @@ table { width:100%; border-collapse:collapse; margin-bottom:30px; }
 th, td { border:1px solid #ccc; padding:6px; text-align:center; }
 th { background:#eee; }
 .current-week { background:#fff59d; font-weight:bold; }
+
+.stock-decreased {
+  color: #ef6c00;   /* orange */
+  font-weight: bold;
+}
+
+.stock-zero {
+  color: #c62828;   /* red */
+  font-weight: bold;
+}
+
+.stock-increased {
+  color: #2e7d32;   /* green */
+  font-weight: bold;
+}
+
 </style>
 </head>
 
@@ -154,17 +170,40 @@ function renderStockTable() {
     if (!weeklyStock[name])
       weeklyStock[name] = new Array(WEEKS).fill(null);
 
+    let previousValue = null;
+
     const row = document.createElement("tr");
 
     const cells = weeklyStock[name].map((value, index) => {
 
-      // Only show stock if that week has been closed
-      if (closedWeeks.includes(index + 1)) {
-        return `<td>${value !== null ? value : data.initialStock}</td>`;
+      // If week not closed yet
+      if (!closedWeeks.includes(index + 1)) {
+        return `<td>-</td>`;
       }
 
-      // Week not closed yet
-      return `<td>-</td>`;
+      let stockValue = value !== null ? value : data.initialStock;
+      let className = "";
+
+      // Compare with previous week
+      if (previousValue !== null) {
+
+        if (stockValue < previousValue) {
+          className = "stock-decreased";
+        }
+
+        if (stockValue > previousValue) {
+          className = "stock-increased";
+        }
+
+      }
+
+      if (stockValue === 0) {
+        className = "stock-zero";
+      }
+
+      previousValue = stockValue;
+
+      return `<td class="${className}">${stockValue}</td>`;
     }).join("");
 
     row.innerHTML = `
@@ -175,6 +214,7 @@ function renderStockTable() {
     body.appendChild(row);
   });
 }
+
 
 // ---------------- SET STOCK ----------------
 window.setStock = function(name,value){
@@ -262,6 +302,7 @@ renderStockTable();
 
 </body>
 </html>
+
 
 
 
