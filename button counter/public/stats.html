@@ -1,3 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Eagle Shop Stats</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+body { font-family: Roboto, sans-serif; padding:20px; }
+h1 { text-align:center; }
+
+.controls { text-align:center; margin-bottom:15px; }
+button { padding:8px 14px; margin:5px; cursor:pointer; font-weight:bold; }
+.reset { background:#f44336; color:white; border:none; }
+
+table { width:100%; border-collapse:collapse; margin-bottom:30px; }
+th, td { border:1px solid #ccc; padding:6px; text-align:center; }
+th { background:#eee; }
+.current-week { background:#fff59d; font-weight:bold; }
+
+.stock-decreased {
+  color: #ef6c00;   /* orange */
+  font-weight: bold;
+}
+
+.stock-zero {
+  color: #c62828;   /* red */
+  font-weight: bold;
+}
+
+.stock-increased {
+  color: #2e7d32;   /* green */
+  font-weight: bold;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>Eagle Shop Stats</h1>
+
+<div class="controls">
+  <button id="prev">⬅ Previous</button>
+  <span id="week-label">Week 1</span>
+  <button id="next">Next ➡</button><br><br>
+  <button id="closeWeek">Close This Week</button>
+  <button class="reset" id="reset">Reset ALL Data</button>
+  <button id="export">💾 Export to Excel</button>
+</div>
+
+<!-- MAIN SALES TABLE -->
+<table id="stats-table">
+<thead>
+<tr>
+  <th>Group</th>
+  <th>Button</th>
+  <th>W1</th><th>W2</th><th>W3</th><th>W4</th><th>W5</th>
+  <th>W6</th><th>W7</th><th>W8</th><th>W9</th><th>W10</th>
+  <th>Total</th>
+  <th>Initial Stock</th>
+  <th>Current Stock</th>
+</tr>
+</thead>
+<tbody id="table"></tbody>
+</table>
+
+<!-- HORIZONTAL WEEKLY STOCK TABLE -->
+<h2>Weekly Remaining Stock</h2>
+
+<table id="stock-table">
+<thead>
+<tr>
+  <th>Button</th>
+  <th>W1</th><th>W2</th><th>W3</th><th>W4</th><th>W5</th>
+  <th>W6</th><th>W7</th><th>W8</th><th>W9</th><th>W10</th>
+</tr>
+</thead>
+<tbody id="stock-body"></tbody>
+</table>
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -197,3 +280,13 @@ document.getElementById("reset").onclick=function(){
 // ---------------- INITIAL RENDER ----------------
 render();
 </script>
+
+
+</body>
+</html>
+
+
+
+
+
+
